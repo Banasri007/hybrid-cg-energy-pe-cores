@@ -1,0 +1,18 @@
+# started on Sun Oct  4 02:48:51 2026
+
+CPU0,32578356402,,cpu_core/cycles/,9382596175,100.00,,
+CPU2,32339664357,,cpu_core/cycles/,9382500340,100.00,,
+CPU4,32273584459,,cpu_core/cycles/,9382618346,100.00,,
+CPU6,32195186374,,cpu_core/cycles/,9382772755,100.00,,
+CPU0,44459570802,,cpu_core/instructions/,9382592700,100.00,,
+CPU2,44505939211,,cpu_core/instructions/,9382503455,100.00,,
+CPU4,44005286144,,cpu_core/instructions/,9382616312,100.00,,
+CPU6,43574719361,,cpu_core/instructions/,9382770182,100.00,,
+CPU0,22914539,,cpu_core/cpu_clk_unhalted.pause/,9382590812,100.00,,
+CPU2,26223028,,cpu_core/cpu_clk_unhalted.pause/,9382505361,100.00,,
+CPU4,23903281,,cpu_core/cpu_clk_unhalted.pause/,9382614569,100.00,,
+CPU6,18082339,,cpu_core/cpu_clk_unhalted.pause/,9382768100,100.00,,
+CPU0,23152031,,cpu_core/cpu_clk_unhalted.c0_wait/,9382587995,100.00,,
+CPU2,26302102,,cpu_core/cpu_clk_unhalted.c0_wait/,9382506363,100.00,,
+CPU4,23903281,,cpu_core/cpu_clk_unhalted.c0_wait/,9382612116,100.00,,
+CPU6,18155588,,cpu_core/cpu_clk_unhalted.c0_wait/,9382765465,100.00,,

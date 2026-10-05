@@ -1,0 +1,18 @@
+To use it on Windows
+
+Copy the whole report/ folder: the .md file plus figures/.
+Give Claude the .md and tell it to "build the .docx following the formatting instructions at the top".
+
+Before you submit
+
+Title page: fill in team names, registration numbers and guide name. They're left as [placeholders].
+Unverified claims: several are marked [Verify: …] and will show up highlighted in yellow. The note at the end of the .md lists all of them. The ones that matter most:
+Wlotzka & Heuveline [12]: needs a full read through library access.
+Nakajima [9]: the specific process×thread figures.
+The exact titles and URLs for the Intel whitepaper [1] and the Brown & Neri talk [2].
+
+Where a figure couldn't be checked (the Krzywaniak and Ostapenco numbers), I left it out of the text rather than state it.
+
+Last-5-years requirement: 10 references qualify; the older ones are cited as foundational. Check with your instructor that this mix is acceptable.
+
+To regenerate the figures after any data change, run python3 report/make_figures.py on Ubuntu.

@@ -1,0 +1,11 @@
+date: 2026-10-04T02:19:46+05:30
+config_file: configs/converge.txt  reps: 1  iters: 20000  tol: 1e-8  cool_c: 55
+cpu: 13th Gen Intel(R) Core(TM) i5-13500H
+kernel: 6.8.0-110-generic
+governor: powersave 
+epp: balance_performance 
+no_turbo: 0
+platform_profile: balanced
+ac_online: 1
+mpirun: mpirun (Open MPI) 4.1.2
+idle_baseline: idle_s=20.00 p_pkg_w=0.741 p_core_w=0.041 p_uncore_w=0.001 p_psys_w=2.486 temp_start_c=55.0 temp_end_c=51.0

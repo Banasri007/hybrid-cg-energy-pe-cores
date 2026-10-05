@@ -1,0 +1,59 @@
+# label cpus ranks threads sched   (cpus=none -> unpinned, OS scheduler decides)
+# single core: P vs E
+P1 0 1 1 static
+E1 8 1 1 static
+# 4 physical cores: P-only vs E-only (RQ2)
+P4 0,2,4,6 4 1 static
+P4 0,2,4,6 2 2 static
+P4 0,2,4,6 1 4 static
+E4 8,9,10,11 4 1 static
+E4 8,9,10,11 2 2 static
+E4 8,9,10,11 1 4 static
+# 4 E-cores spread over both E-modules (8-11 and 12-15 each share one L2): tests per-module bandwidth limit
+E4s 8,9,12,13 4 1 static
+E4s 8,9,12,13 2 2 static
+E4s 8,9,12,13 1 4 static
+# 8 hardware threads: 4 P-cores+HT vs 8 E-cores vs 4P+4E (RQ1/RQ2)
+P8ht 0,1,2,3,4,5,6,7 8 1 static
+P8ht 0,1,2,3,4,5,6,7 4 2 static
+P8ht 0,1,2,3,4,5,6,7 2 4 static
+P8ht 0,1,2,3,4,5,6,7 1 8 static
+E8 8,9,10,11,12,13,14,15 8 1 static
+E8 8,9,10,11,12,13,14,15 4 2 static
+E8 8,9,10,11,12,13,14,15 2 4 static
+E8 8,9,10,11,12,13,14,15 1 8 static
+M8 0,2,4,6,8,9,10,11 8 1 static
+M8 0,2,4,6,8,9,10,11 4 2 static
+M8 0,2,4,6,8,9,10,11 2 4 static
+M8 0,2,4,6,8,9,10,11 1 8 static
+# all 12 physical cores, all 16 hw threads
+A12 0,2,4,6,8,9,10,11,12,13,14,15 12 1 static
+A12 0,2,4,6,8,9,10,11,12,13,14,15 6 2 static
+A12 0,2,4,6,8,9,10,11,12,13,14,15 4 3 static
+A12 0,2,4,6,8,9,10,11,12,13,14,15 3 4 static
+A12 0,2,4,6,8,9,10,11,12,13,14,15 2 6 static
+A12 0,2,4,6,8,9,10,11,12,13,14,15 1 12 static
+A16 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 16 1 static
+A16 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 8 2 static
+A16 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 4 4 static
+A16 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 2 8 static
+A16 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 1 16 static
+# unpinned default scheduler (RQ3)
+U4 none 4 1 static
+U4 none 2 2 static
+U4 none 1 4 static
+U8 none 8 1 static
+U8 none 4 2 static
+U8 none 2 4 static
+U8 none 1 8 static
+U12 none 12 1 static
+U12 none 1 12 static
+U16 none 16 1 static
+U16 none 4 4 static
+U16 none 1 16 static
+# dynamic SpMV schedule where one rank's threads span unequal cores
+P4 0,2,4,6 1 4 dynamic,64
+E8 8,9,10,11,12,13,14,15 1 8 dynamic,64
+M8 0,2,4,6,8,9,10,11 1 8 dynamic,64
+A12 0,2,4,6,8,9,10,11,12,13,14,15 1 12 dynamic,64
+A16 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 1 16 dynamic,64

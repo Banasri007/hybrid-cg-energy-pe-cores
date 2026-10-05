@@ -1,0 +1,3 @@
+# Clean idle baseline (browser/apps closed, 60 s settle, top process gnome-shell 0.7% CPU), 2026-10-04
+# Supersedes the per-sweep idle_baseline lines in *.meta.txt, which were taken with background load.
+idle_baseline: idle_s=30.00 p_pkg_w=0.340 p_core_w=0.026 p_uncore_w=0.000 p_psys_w=0.805 temp_start_c=38.0 temp_end_c=39.0

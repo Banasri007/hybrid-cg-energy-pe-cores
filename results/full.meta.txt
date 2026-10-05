@@ -1,0 +1,11 @@
+date: 2026-10-03T21:40:20+05:30
+config_file: configs/full.txt  reps: 3  iters: 1000  cool_c: 55
+cpu: 13th Gen Intel(R) Core(TM) i5-13500H
+kernel: 6.8.0-110-generic
+governor: powersave 
+epp: balance_performance 
+no_turbo: 0
+platform_profile: balanced
+ac_online: 1
+mpirun: mpirun (Open MPI) 4.1.2
+idle_baseline: idle_s=20.00 p_pkg_w=13.143 p_core_w=10.892 p_uncore_w=0.008 p_psys_w=20.356 temp_start_c=60.0 temp_end_c=64.0

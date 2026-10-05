@@ -1,0 +1,11 @@
+date: 2026-10-04T01:56:34+05:30
+config_file: configs/spin.txt  reps: 3  iters: 1000  tol: 0  cool_c: 55
+cpu: 13th Gen Intel(R) Core(TM) i5-13500H
+kernel: 6.8.0-110-generic
+governor: powersave 
+epp: balance_performance 
+no_turbo: 0
+platform_profile: balanced
+ac_online: 1
+mpirun: mpirun (Open MPI) 4.1.2
+idle_baseline: idle_s=20.00 p_pkg_w=0.467 p_core_w=0.047 p_uncore_w=0.001 p_psys_w=1.243 temp_start_c=37.0 temp_end_c=39.0

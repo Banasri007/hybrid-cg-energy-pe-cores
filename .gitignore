@@ -1,0 +1,10 @@
+# SuiteSparse matrices (~900 MB) - fetch with ./get_matrices.sh
+matrices/
+# build outputs
+src/cg_seq
+src/cg_hybrid
+src/rcm
+src/rapl_idle
+src/hello_hybrid
+*.o
+__pycache__/

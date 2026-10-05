@@ -1,0 +1,22 @@
+date: 2026-10-03T20:14:32+05:30
+config_file: configs/pilot.txt  reps: 3  iters: 1000  cool_c: 55
+cpu: 13th Gen Intel(R) Core(TM) i5-13500H
+kernel: 6.8.0-110-generic
+governor: powersave 
+epp: balance_performance 
+no_turbo: 0
+platform_profile: balanced
+ac_online: 1
+mpirun: mpirun (Open MPI) 4.1.2
+idle_baseline: idle_s=20.00 p_pkg_w=-1.000 p_core_w=-1.000 p_uncore_w=-1.000 p_psys_w=-1.000 temp_start_c=44.0 temp_end_c=44.0
+date: 2026-10-03T20:15:20+05:30
+config_file: configs/pilot.txt  reps: 3  iters: 1000  cool_c: 55
+cpu: 13th Gen Intel(R) Core(TM) i5-13500H
+kernel: 6.8.0-110-generic
+governor: powersave 
+epp: balance_performance 
+no_turbo: 0
+platform_profile: balanced
+ac_online: 1
+mpirun: mpirun (Open MPI) 4.1.2
+idle_baseline: idle_s=20.00 p_pkg_w=0.652 p_core_w=0.098 p_uncore_w=0.001 p_psys_w=1.803 temp_start_c=44.0 temp_end_c=45.0

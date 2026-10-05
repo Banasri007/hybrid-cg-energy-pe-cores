@@ -1,0 +1,18 @@
+# Spin test: does waiting-while-spinning explain why pure MPI costs ~1.6x energy on mixed P+E?
+# MPI ranks spin in MPI_Allreduce by default; libgomp threads spin briefly then sleep.
+# If OpenMP-only forced to spin (OMP_WAIT_POLICY=active) climbs to the MPI-only energy, spinning is the cause.
+# mpi_yield_when_idle makes waiting ranks call sched_yield (still busy if nothing else is runnable).
+A12 0,2,4,6,8,9,10,11,12,13,14,15 12 1 static
+A12-yield 0,2,4,6,8,9,10,11,12,13,14,15 12 1 static - --mca,mpi_yield_when_idle,1
+A12 0,2,4,6,8,9,10,11,12,13,14,15 1 12 static
+A12-ompactive 0,2,4,6,8,9,10,11,12,13,14,15 1 12 static OMP_WAIT_POLICY=active
+A12-omppassive 0,2,4,6,8,9,10,11,12,13,14,15 1 12 static OMP_WAIT_POLICY=passive
+M8 0,2,4,6,8,9,10,11 8 1 static
+M8-yield 0,2,4,6,8,9,10,11 8 1 static - --mca,mpi_yield_when_idle,1
+M8 0,2,4,6,8,9,10,11 1 8 static
+M8-ompactive 0,2,4,6,8,9,10,11 1 8 static OMP_WAIT_POLICY=active
+M8-omppassive 0,2,4,6,8,9,10,11 1 8 static OMP_WAIT_POLICY=passive
+# control: homogeneous P-cores (no slow ranks to wait for)
+P4 0,2,4,6 4 1 static
+P4 0,2,4,6 1 4 static
+P4-ompactive 0,2,4,6 1 4 static OMP_WAIT_POLICY=active

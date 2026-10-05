@@ -1,0 +1,1 @@
+matrix=matrices/thermal2/thermal2.rcm.csr n=1228045 nnz=8580313 ranks=1 threads=4 sched=static,0 iters=2000 converged=0 rel_res=2.936e-05 true_rel_res=2.936e-05 max_err=1.903e-03 ghost_max=0 time_s=8.904190 halo_s=0.003132 allreduce_s=0.002356 e_pkg_j=257.658 e_core_j=218.667 e_uncore_j=0.012 e_psys_j=375.987 temp_start_c=62.0 temp_end_c=77.0 throttle_delta=0 cpu_map=0.2.4.6
