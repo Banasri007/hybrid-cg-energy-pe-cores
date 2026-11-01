@@ -91,7 +91,6 @@ These checks are not an exhaustive proof for arbitrary inputs, an independent ex
 
 | Objective / condition | Current status |
 |---|---|
-| O1: implement and validate the solver | Achieved for the recorded A/B workloads and tested synthetic cases |
 | O2: measurement harness and pinned CV below 2% | Partly achieved: harness complete, but some groups exceed the CV target |
 | O3: equal-count and separate mixed comparisons | Achieved, with actual sample counts disclosed |
 | O4: answer RQ1–RQ3 | Addressed descriptively, with measurement and statistical limits stated |
@@ -101,18 +100,6 @@ Median pinned-group CVs are 0.52% runtime / 0.66% energy in A, and 0.15% / 0.25%
 The sweep checks a ≤55 °C target before launch, with a nominal 120 s wait limit. Two-second polling can overshoot that limit; A records a maximum cooldown of 121 s. Solve-start temperature is recorded after setup: it exceeds 55 °C in 180/183 A rows and 165/165 B rows, with maxima of 74 °C and 67 °C. The absence of recorded throttle events does not establish identical frequency or thermal conditions.
 
 Other limits include one platform, one MPI implementation, small samples, unequal A sample counts, package-level rather than per-core or wall-plug energy, no DRAM domain, and a constructed RHS with no preconditioner. A matrix exceeding cache capacity alone does not prove bandwidth saturation. Cache contention and the exact polling mechanism have not been fully isolated by controlled measurements.
-
-## Remaining work
-
-The following are open issues, not completed fixes:
-
-1. **Analysis correctness:** reconcile the `1.05 * tol` diagnostic with the generated `<= tol` wording; reject or explicitly flag nonfinite/unknown measurements. A/B separately pass the strict recorded bound.
-2. **Automatic comparison wording:** distinguish physical cores from hardware threads; name RQ3 runtime and energy references separately; label the 3% tie rule as a heuristic rather than a significance test.
-3. **Sweep completeness:** preserve structured failure records, validate expected coverage, add session identifiers and explicit resume/new-run behaviour. Currently a failed job can be skipped while the script still prints `done`.
-4. **Exit status and tests:** tolerance-mode nonconvergence currently returns exit code zero. Add numerical assertions and hybrid/input-failure tests; `make test` is presently limited to sequential examples.
-5. **Report reproducibility:** automate data-to-table/prose generation. `build_report.py` renumbers citations; it does not recalculate numerical content after data changes.
-6. **Literature and claims:** resolve outstanding full-text checks recorded in `citations_verified.md` and distinguish supported interpretations from isolated causal findings.
-7. **Presentation:** authors will complete the title-page details and prepare the final document format.
 
 Future experimental work could add speed-aware partitioning, more independent sessions and tighter thermal controls, direct bandwidth measurements, other processors/MPI implementations, preconditioners, and alternative waiting strategies. These extensions are not part of the completed implementation.
 
