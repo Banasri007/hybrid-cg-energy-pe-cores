@@ -1,0 +1,26 @@
+date: 2026-11-01T12:28:37+05:30
+config_file: configs/equalcount.txt  reps: 3  iters: 20000  tol: 1e-8  cool_c: 55
+cpu: 13th Gen Intel(R) Core(TM) i5-13500H
+kernel: 6.8.0-110-generic
+governor: powersave 
+epp: balance_performance 
+no_turbo: 0
+platform_profile: balanced
+ac_online: 1
+mpirun: mpirun (Open MPI) 4.1.2
+rapl_domains: intel-rapl:0=package-0 intel-rapl:0:0=core intel-rapl:0:1=uncore intel-rapl:1=psys 
+exclusion_rule: throttle_delta > 0 or ac_online != 1 (fixed before the sweep; no other runs removed)
+idle_baseline: idle_s=20.00 p_pkg_w=0.642 p_core_w=0.087 p_uncore_w=0.001 p_psys_w=1.790 temp_start_c=47.0 temp_end_c=46.0
+date: 2026-11-01T14:03:34+05:30
+config_file: configs/equalcount.txt  reps: 3  iters: 20000  tol: 1e-8  cool_c: 55
+cpu: 13th Gen Intel(R) Core(TM) i5-13500H
+kernel: 6.8.0-110-generic
+governor: powersave 
+epp: balance_performance 
+no_turbo: 0
+platform_profile: balanced
+ac_online: 1
+mpirun: mpirun (Open MPI) 4.1.2
+rapl_domains: intel-rapl:0=package-0 intel-rapl:0:0=core intel-rapl:0:1=uncore intel-rapl:1=psys 
+exclusion_rule: throttle_delta > 0 or ac_online != 1 (fixed before the sweep; no other runs removed)
+idle_baseline: idle_s=20.00 p_pkg_w=0.565 p_core_w=0.067 p_uncore_w=0.001 p_psys_w=1.491 temp_start_c=41.0 temp_end_c=40.0

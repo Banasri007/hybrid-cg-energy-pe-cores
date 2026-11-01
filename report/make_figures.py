@@ -118,17 +118,28 @@ def fig_flowchart():
 
 # ---------- Fig 3: energy vs time (RQ1) ----------
 def fig_energy_vs_time(full):
+    """Experiments A+B (solve to tolerance) when available, else the fixed-iteration survey."""
+    a, b = (os.path.join(ROOT, "results", f"{n}_summary.csv") for n in ("equalcount", "mixed"))
+    tol_mode = os.path.exists(a) and os.path.exists(b)
+    if tol_mode:
+        ea, eb = load_summary("equalcount"), load_summary("mixed")
+        full = {m: {**ea.get(m, {}), **eb.get(m, {})} for m in MATRICES}
+        title = "Energy-to-solution vs. time-to-solution, Experiments A and B (tolerance 1e-8, mean of 3)"
+        tk, ek = "time_mean", "e_mean"
+    else:
+        title = "Energy vs. time for all 51 configurations (1000 CG iterations, median of 3)"
+        tk, ek = "time_med", "e_pkg_med"
     fig, axes = plt.subplots(2, 3, figsize=(7.4, 5.2))
     for ax, m in zip(axes.flat, MATRICES):
         rows = list(full[m].values())
         for cls, c in CLASS_COL.items():
             pts = [r for r in rows if r["cls"] == cls]
-            ax.scatter([float(r["time_med"]) for r in pts], [float(r["e_pkg_med"]) for r in pts],
+            ax.scatter([float(r[tk]) for r in pts], [float(r[ek]) for r in pts],
                        s=14, color=c, edgecolor="white", linewidth=0.5, label=cls, zorder=3)
-        fast = min(rows, key=lambda r: float(r["time_med"]))
-        frug = min(rows, key=lambda r: float(r["e_pkg_med"]))
+        fast = min(rows, key=lambda r: float(r[tk]))
+        frug = min(rows, key=lambda r: float(r[ek]))
         for r, tag, dx in [(fast, "fastest", 6), (frug, "min energy", 6)]:
-            ax.annotate(f"{tag}\n{r['cfg']}", (float(r["time_med"]), float(r["e_pkg_med"])),
+            ax.annotate(f"{tag}\n{r['cfg']}", (float(r[tk]), float(r[ek])),
                         xytext=(dx, 8), textcoords="offset points", fontsize=6.4, color="#111111",
                         arrowprops=dict(arrowstyle="-", color="#777777", lw=0.5))
         ax.set_title(m, fontsize=9, loc="left")
@@ -138,7 +149,7 @@ def fig_energy_vs_time(full):
     ax = axes.flat[5]; ax.axis("off")
     ax.legend(handles=[plt.Line2D([], [], marker="o", ls="", color=c, label=k) for k, c in CLASS_COL.items()],
               loc="center", frameon=False, fontsize=8, title="core-type class", title_fontsize=8)
-    fig.suptitle("Energy vs. time for all 51 configurations (1000 CG iterations, median of 3)", fontsize=9.5, x=0.02, ha="left")
+    fig.suptitle(title, fontsize=9.5, x=0.02, ha="left")
     fig.tight_layout()
     save(fig, "fig3_energy_vs_time.png")
 
@@ -206,13 +217,126 @@ def fig_perf():
                 ax.text(xx, yy, f"{yy:.0f}" if col == 3 else f"{yy:.1f}", ha="center", va="bottom", fontsize=6.5)
         ax.set_xticks(range(len(labels)), [n for _, n in labels], fontsize=7.5)
         ax.set_title(ttl, fontsize=8.5, loc="left")
+        ax.set_ylabel("instructions (×10⁹)" if col == 3 else "share of P-core cycles (%)", fontsize=7.5)
         style(ax)
     axes[0].legend(frameon=False, fontsize=7.5, loc="upper left")
     fig.tight_layout()
     save(fig, "fig6_perf_counters.png")
 
 
+# ---------- design: CPU topology and process/thread mapping ----------
+def fig_topology():
+    fig, ax = plt.subplots(figsize=(7.2, 3.6))
+    ax.set_xlim(0, 16); ax.set_ylim(0, 8); ax.axis("off")
+    # P-cores: 4 cores x 2 HT threads
+    for c in range(4):
+        x = 0.3 + c * 1.85
+        ax.add_patch(FancyBboxPatch((x, 4.2), 1.65, 2.6, boxstyle="round,pad=0.02,rounding_size=0.08",
+                                    fc="#dbe8f8", ec=SER[0], lw=0.9))
+        ax.text(x + 0.82, 6.45, f"P-core {c}", ha="center", fontsize=7.5, weight="bold")
+        for h in range(2):
+            cpu = 2 * c + h
+            ax.add_patch(plt.Rectangle((x + 0.15 + h * 0.72, 5.25), 0.62, 0.75, fc="white", ec="#555555", lw=0.6))
+            ax.text(x + 0.46 + h * 0.72, 5.62, f"{cpu}", ha="center", va="center", fontsize=7.5)
+        ax.text(x + 0.82, 4.55, "L2 1.25 MB", ha="center", fontsize=6.5)
+    ax.text(3.9, 7.25, "4 P-cores (HT): CPUs 0–7, ≤ 4.7 GHz", ha="center", fontsize=8)
+    # E-modules
+    for mdl in range(2):
+        x = 7.9 + mdl * 4.0
+        ax.add_patch(FancyBboxPatch((x, 4.2), 3.8, 2.6, boxstyle="round,pad=0.02,rounding_size=0.08",
+                                    fc="#fde3d6", ec=SER[1], lw=0.9))
+        ax.text(x + 1.9, 6.45, f"E-module {mdl}", ha="center", fontsize=7.5, weight="bold")
+        for k in range(4):
+            cpu = 8 + 4 * mdl + k
+            ax.add_patch(plt.Rectangle((x + 0.2 + k * 0.88, 5.25), 0.75, 0.75, fc="white", ec="#555555", lw=0.6))
+            ax.text(x + 0.57 + k * 0.88, 5.62, f"{cpu}", ha="center", va="center", fontsize=7.5)
+        ax.text(x + 1.9, 4.55, "shared L2 2 MB", ha="center", fontsize=6.5)
+    ax.text(11.85, 7.25, "8 E-cores (no HT): CPUs 8–15, ≤ 3.5 GHz", ha="center", fontsize=8)
+    ax.add_patch(plt.Rectangle((0.3, 3.2), 15.4, 0.6, fc="#eeeeee", ec="#555555", lw=0.6))
+    ax.text(8.0, 3.5, "ring interconnect  ·  shared L3 18 MB  ·  memory controller (RAPL: package-0, core, uncore, psys)",
+            ha="center", va="center", fontsize=7.5)
+    rows = [("P4", "0, 2, 4, 6", "one thread per P-core"), ("E4 (packed)", "8, 9, 10, 11", "one E-module"),
+            ("E4s (spread)", "8, 9, 12, 13", "two per E-module"), ("M8", "0, 2, 4, 6, 8–11", "4P + 4E, mixed"),
+            ("A16", "0–15", "all hardware threads")]
+    ax.text(0.3, 2.55, "Example CPU sets (rank r with T threads gets entries r·T … r·T+T−1):", fontsize=7.5, weight="bold")
+    for i, (a, b, c) in enumerate(rows):
+        y = 2.0 - i * 0.42
+        ax.text(0.5, y, a, fontsize=7.3); ax.text(3.0, y, b, fontsize=7.3); ax.text(6.2, y, c, fontsize=7.3, color="#444444")
+    save(fig, "fig_topology_mapping.png")
+
+
+# ---------- design: task decomposition and communication pattern ----------
+def fig_decomposition():
+    fig, ax = plt.subplots(figsize=(7.2, 3.8))
+    ax.set_xlim(0, 16); ax.set_ylim(0, 8.4); ax.axis("off")
+    cols = [SER[0], SER[2], SER[3], SER[1]]
+    ax.add_patch(plt.Rectangle((0.4, 0.6), 5.2, 7.2, fc="white", ec="#333333", lw=0.8))
+    import numpy as _np
+    rng = _np.random.default_rng(3)
+    for r in range(4):
+        y0 = 0.6 + (3 - r) * 1.8
+        ax.add_patch(plt.Rectangle((0.4, y0), 5.2, 1.8, fc=cols[r], alpha=0.18, ec="none"))
+        ax.text(5.8, y0 + 0.9, f"rank {r}", va="center", fontsize=7.5, color="#111111")
+        # band of nonzeros around the diagonal (after RCM)
+        for _ in range(55):
+            yy = y0 + rng.uniform(0.05, 1.75)
+            d = (7.8 - yy) / 7.2 * 5.2 + 0.4
+            xx = d + rng.normal(0, 0.35)
+            if 0.45 < xx < 5.55:
+                inside = (0.4 + (r) * 1.3) <= xx <= (0.4 + (r + 1) * 1.3)
+                ax.plot(xx, yy, "s", ms=1.6, color="#333333" if inside else "#d43c3c")
+    ax.text(3.0, 8.05, "A after RCM: row blocks with ≈ equal nonzeros", ha="center", fontsize=7.5)
+    ax.text(3.0, 0.2, "black = owned column · red = halo (ghost) column", ha="center", fontsize=6.8)
+    # communication side
+    xs = [8.2, 10.3, 12.4, 14.5]
+    for r, x in enumerate(xs):
+        ax.add_patch(FancyBboxPatch((x - 0.75, 5.7), 1.5, 1.2, boxstyle="round,pad=0.02,rounding_size=0.08",
+                                    fc=cols[r], alpha=0.35, ec="#333333", lw=0.7))
+        ax.text(x, 6.55, f"rank {r}", ha="center", fontsize=7.5, weight="bold")
+        ax.text(x, 6.05, "T OpenMP\nthreads", ha="center", fontsize=6.3, linespacing=1.1)
+    for a, b in zip(xs[:-1], xs[1:]):
+        ax.annotate("", xy=(b - 0.78, 6.3), xytext=(a + 0.78, 6.3), arrowprops=dict(arrowstyle="<|-|>", color="#d43c3c", lw=1.0))
+    ax.text(11.35, 7.35, "(1) halo exchange of p (Isend/Irecv, neighbours only)", ha="center", fontsize=7.3, color="#d43c3c")
+    ax.add_patch(FancyBboxPatch((7.4, 3.3), 7.9, 0.9, boxstyle="round,pad=0.02,rounding_size=0.08", fc="#dbe8f8", ec=SER[0], lw=0.8))
+    ax.text(11.35, 3.75, "(2)(3) MPI_Allreduce: p·Ap → α  and  r·r → convergence test, β", ha="center", va="center", fontsize=7.3)
+    for x in xs:
+        ax.annotate("", xy=(x, 4.25), xytext=(x, 5.65), arrowprops=dict(arrowstyle="<|-|>", color=SER[0], lw=0.8))
+    ax.text(11.35, 2.4, "per iteration: 1 halo exchange + 1 SpMV (threaded)\n"
+                        "+ 2 Allreduce + 3 vector updates (threaded)", ha="center", fontsize=7.3, linespacing=1.4)
+    save(fig, "fig_decomposition_comm.png")
+
+
+# ---------- Experiment A: equal-core-count P vs E (needs results/equalcount_summary.csv) ----------
+def fig_equalcount():
+    path = os.path.join(ROOT, "results", "equalcount_summary.csv")
+    if not os.path.exists(path):
+        print("skip fig_equalcount (run revision_runs.sh first)")
+        return
+    eq = load_summary("equalcount")
+    fam = [("P-cores", ["P1", "P2", "P3", "P4"], SER[0], "o"),
+           ("E-cores, packed in one module", ["E1", "E2", "E3", "E4"], SER[1], "s"),
+           ("E-cores, spread over two modules", ["E1", "E2s", "E3s", "E4s"], SER[2], "^")]
+    fig, axes = plt.subplots(2, 5, figsize=(7.4, 3.9), sharex=True)
+    for j, m in enumerate(MATRICES):
+        for row, (key, sd, lab) in enumerate([("e_mean", "e_sd", "energy-to-solution (J)"), ("time_mean", "time_sd", "time-to-solution (s)")]):
+            ax = axes[row, j]
+            for name, labels, c, mk in fam:
+                pts = [(k + 1, eq[m].get(f"{l} 1x{k+1}")) for k, l in enumerate(labels)]
+                pts = [(x, r) for x, r in pts if r]
+                ax.errorbar([x for x, _ in pts], [float(r[key]) for _, r in pts], yerr=[float(r[sd]) for _, r in pts],
+                            color=c, marker=mk, ms=3.5, lw=1.2, capsize=2, label=name)
+            ax.set_xticks([1, 2, 3, 4]); ax.tick_params(labelsize=6.5)
+            if j == 0: ax.set_ylabel(lab, fontsize=7)
+            if row == 0: ax.set_title(m, fontsize=8, loc="left")
+            if row == 1: ax.set_xlabel("physical cores", fontsize=7)
+            style(ax, "both")
+    axes[0, 0].legend(frameon=False, fontsize=6.5, loc="upper left", bbox_to_anchor=(0, -1.55), ncol=3)
+    fig.tight_layout()
+    save(fig, "fig_equalcount.png")
+
+
 if __name__ == "__main__":
     full, spin = load_summary("full"), load_summary("spin")
     fig_architecture(); fig_flowchart(); fig_energy_vs_time(full)
     fig_core_type(full); fig_mpi_vs_omp(spin); fig_perf()
+    fig_topology(); fig_decomposition(); fig_equalcount()

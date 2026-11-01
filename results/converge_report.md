@@ -3,11 +3,11 @@
 ## Data quality
 
 - runs: 30 total, 0 throttled (excluded), 0 on battery/unknown power (excluded), 30 kept
-- iteration count MISMATCH ['6606', '6618', '6634', '6651'] across configs for G3_circuit.rcm.csr
-- iteration count MISMATCH ['4914', '4915', '4922', '4926', '4927'] across configs for apache2.rcm.csr
-- iteration count MISMATCH ['9463', '9464', '9466', '9510', '9515', '9522'] across configs for cant.rcm.csr
-- iteration count IDENTICAL across configs for ecology2.rcm.csr
-- iteration count MISMATCH ['4330', '4331', '4332'] across configs for thermal2.rcm.csr
+- G3_circuit.rcm.csr: tol 1e-08; 6/6 runs converged with true relative residual <= tol (max 9.81e-09); iterations 6606-6651 (spread 0.7%)
+- apache2.rcm.csr: tol 1e-08; 6/6 runs converged with true relative residual <= tol (max 9.96e-09); iterations 4914-4927 (spread 0.3%)
+- cant.rcm.csr: tol 1e-08; 6/6 runs converged with true relative residual <= tol (max 9.89e-09); iterations 9463-9522 (spread 0.6%)
+- ecology2.rcm.csr: tol 1e-08; 6/6 runs converged with true relative residual <= tol (max 9.95e-09); iterations 6233-6233 (spread 0.0%)
+- thermal2.rcm.csr: tol 1e-08; 6/6 runs converged with true relative residual <= tol (max 1.00e-08); iterations 4330-4332 (spread 0.0%)
 - idle baseline: pkg 0.34 W, core 0.03 W, uncore 0.00 W, psys 0.81 W
 
 ## Per-matrix results (median over reps)
@@ -25,6 +25,7 @@
 
 - **RQ1** fastest: `U16 1x16` (30.439 s)
   - lowest energy: `E4s 1x4` (574.3 J) -> DIVERGE: fastest costs 1.25x the energy, frugal is 1.75x slower
+- **RQ2** P4 1x4 vs E4s 1x4: E-cores take 1.72x the time, 0.70x the package energy
 - **RQ2** P8ht 1x8 vs E8 1x8: E-cores take 1.36x the time, 0.80x the package energy
 - **RQ3** 16 threads: best unpinned `U16 1x16` 30.439 s vs best pinned `A16 1x16` 30.531 s (1.00x); energy 718.4 vs 720.3 J (1.00x)
 
@@ -41,6 +42,7 @@
 
 - **RQ1** fastest: `U16 1x16` (9.863 s)
   - lowest energy: `E8 1x8` (217.8 J) -> DIVERGE: fastest costs 1.25x the energy, frugal is 1.67x slower
+- **RQ2** P4 1x4 vs E4s 1x4: E-cores take 1.95x the time, 0.80x the package energy
 - **RQ2** P8ht 1x8 vs E8 1x8: E-cores take 1.64x the time, 0.79x the package energy
 - **RQ3** 16 threads: best unpinned `U16 1x16` 9.863 s vs best pinned `A16 1x16` 9.893 s (1.00x); energy 272.7 vs 272.6 J (1.00x)
 
@@ -57,6 +59,7 @@
 
 - **RQ1** fastest: `A16 1x16` (7.010 s)
   - lowest energy: `E8 1x8` (189.5 J) -> DIVERGE: fastest costs 1.39x the energy, frugal is 1.96x slower
+- **RQ2** P4 1x4 vs E4s 1x4: E-cores take 1.77x the time, 0.87x the package energy
 - **RQ2** P8ht 1x8 vs E8 1x8: E-cores take 1.69x the time, 0.72x the package energy
 - **RQ3** 16 threads: best unpinned `U16 1x16` 7.048 s vs best pinned `A16 1x16` 7.010 s (1.01x); energy 266.3 vs 263.8 J (1.01x)
 
@@ -73,6 +76,7 @@
 
 - **RQ1** fastest: `A16 1x16` (16.501 s)
   - lowest energy: `E4s 1x4` (320.4 J) -> DIVERGE: fastest costs 1.22x the energy, frugal is 1.85x slower
+- **RQ2** P4 1x4 vs E4s 1x4: E-cores take 1.84x the time, 0.73x the package energy
 - **RQ2** P8ht 1x8 vs E8 1x8: E-cores take 1.54x the time, 0.83x the package energy
 - **RQ3** 16 threads: best unpinned `U16 1x16` 16.541 s vs best pinned `A16 1x16` 16.501 s (1.00x); energy 393.5 vs 391.9 J (1.00x)
 
@@ -89,6 +93,7 @@
 
 - **RQ1** fastest: `A16 1x16` (17.495 s)
   - lowest energy: `E8 1x8` (407.2 J) -> DIVERGE: fastest costs 1.26x the energy, frugal is 1.42x slower
+- **RQ2** P4 1x4 vs E4s 1x4: E-cores take 1.62x the time, 0.76x the package energy
 - **RQ2** P8ht 1x8 vs E8 1x8: E-cores take 1.33x the time, 0.81x the package energy
 - **RQ3** 16 threads: best unpinned `U16 1x16` 21.337 s vs best pinned `A16 1x16` 17.495 s (1.22x); energy 569.5 vs 512.0 J (1.11x)
 

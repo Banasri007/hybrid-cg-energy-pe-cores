@@ -3,12 +3,12 @@
 ## Data quality
 
 - runs: 150 total, 0 throttled (excluded), 0 on battery/unknown power (excluded), 150 kept
-- iteration count IDENTICAL across configs for cant.rcm.csr
-- iteration count IDENTICAL across configs for G3_circuit.rcm.csr
-- iteration count IDENTICAL across configs for thermal2.rcm.csr
-- iteration count IDENTICAL across configs for ecology2.rcm.csr
-- iteration count IDENTICAL across configs for apache2.rcm.csr
-- idle baseline: pkg 0.65 W, core 0.10 W, uncore 0.00 W, psys 1.80 W
+- G3_circuit.rcm.csr: fixed 1000-1000 iterations per run (work-normalised mode)
+- apache2.rcm.csr: fixed 1000-1000 iterations per run (work-normalised mode)
+- cant.rcm.csr: fixed 1000-1000 iterations per run (work-normalised mode)
+- ecology2.rcm.csr: fixed 1000-1000 iterations per run (work-normalised mode)
+- thermal2.rcm.csr: fixed 1000-1000 iterations per run (work-normalised mode)
+- idle baseline: pkg 0.34 W, core 0.03 W, uncore 0.00 W, psys 0.81 W
 
 ## Per-matrix results (median over reps)
 

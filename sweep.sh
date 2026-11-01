@@ -14,6 +14,16 @@
 #   COOL_MAX_S  give up waiting after this (run is still logged)   [120]
 #   TOL         CG tolerance; 0 = fixed ITERS iterations, >0 = solve to
 #               tolerance with ITERS as the iteration cap           [0]
+#   IDLE_MAX_W  abort if idle package power at start exceeds this   [5]
+#               (background activity); FORCE=1 to run anyway
+#
+# Pre-defined exclusion rule (applied by analyze.py, never by hand):
+#   a run is excluded only if its thermal-throttle counter increased during
+#   the solve or the laptop was not on AC power. Slow runs are NOT removed.
+#
+# Energy is read twice per run, never summed across MPI processes:
+#   e_pkg_j      rank 0, package counter, between barriers around the solve loop
+#   e_pkg_run_j  this script, package counter, around the whole mpirun
 #
 # Config lines: label cpus ranks threads sched [env] [mpiargs]
 #   env      optional comma-separated VAR=value list, e.g. OMP_WAIT_POLICY=active
@@ -34,6 +44,8 @@ COOL_C=${COOL_C:-55}
 COOL_MIN_S=${COOL_MIN_S:-5}
 COOL_MAX_S=${COOL_MAX_S:-120}
 TOL=${TOL:-0}
+IDLE_MAX_W=${IDLE_MAX_W:-5}
+PKG=/sys/class/powercap/intel-rapl:0
 MATRICES=${MATRICES:-"matrices/ecology2/ecology2.rcm.csr matrices/apache2/apache2.rcm.csr matrices/thermal2/thermal2.rcm.csr matrices/G3_circuit/G3_circuit.rcm.csr matrices/cant/cant.rcm.csr"}
 BIN=src/cg_hybrid
 
@@ -45,6 +57,17 @@ pkg_temp() {
         [[ $(cat "$z/type") == x86_pkg_temp ]] && { echo $(( $(cat "$z/temp") / 1000 )); return; }
     done
     echo 0
+}
+
+pkg_uj() { cat "$PKG/energy_uj" 2>/dev/null || echo -1; }
+
+# package energy in J between two counter readings, handling one wraparound
+pkg_delta_j() {
+    local a=$1 b=$2 max
+    (( a < 0 || b < 0 )) && { echo -1; return; }
+    max=$(cat "$PKG/max_energy_range_uj")
+    (( b < a )) && b=$(( b + max + 1 ))
+    awk -v d=$(( b - a )) 'BEGIN { printf "%.3f", d / 1e6 }'
 }
 
 ac_online() {
@@ -72,14 +95,23 @@ META="${OUT%.csv}.meta.txt"
     echo "platform_profile: $(cat /sys/firmware/acpi/platform_profile 2>/dev/null || echo n/a)"
     echo "ac_online: $(ac_online)"
     echo "mpirun: $(mpirun --version 2>&1 | head -1)"
-    echo "idle_baseline: $(src/rapl_idle 20 || true)"
+    echo "rapl_domains: $(for d in /sys/class/powercap/intel-rapl:*; do printf '%s=%s ' "${d##*/}" "$(cat "$d/name")"; done)"
+    echo "exclusion_rule: throttle_delta > 0 or ac_online != 1 (fixed before the sweep; no other runs removed)"
+    IDLE=$(src/rapl_idle 20 || true)
+    echo "idle_baseline: $IDLE"
 } >> "$META"
-cat "$META" | tail -11
+cat "$META" | tail -13
+
+idle_w=$(sed -nE 's/.*p_pkg_w=([-0-9.]+).*/\1/p' <<< "$IDLE")
+if [[ -n $idle_w ]] && awk -v w="$idle_w" -v m="$IDLE_MAX_W" 'BEGIN { exit !(w > m) }' && [[ ${FORCE:-0} != 1 ]]; then
+    echo "ABORT: idle package power ${idle_w} W > ${IDLE_MAX_W} W -> background activity. Close apps and retry (FORCE=1 to override)." >&2
+    exit 2
+fi
 
 if src/rapl_idle 0.1 > /dev/null; then echo "RAPL: readable"; else
     echo "WARNING: RAPL energy_uj not readable -> energy columns will be -1 (see README)"; fi
 
-[[ -f $OUT ]] || echo "timestamp,rep,label,cpus,ac_online,cooldown_s,${COLS// /,}" > "$OUT"
+[[ -f $OUT ]] || echo "timestamp,rep,label,cpus,ac_online,cooldown_s,load1,run_wall_s,e_pkg_run_j,${COLS// /,}" > "$OUT"
 
 mapfile -t CONFIGS < <(grep -v '^\s*#' "$CFG" | grep -v '^\s*$')
 total=$(( REPS * ${#CONFIGS[@]} * $(wc -w <<< "$MATRICES") ))
@@ -94,6 +126,8 @@ for rep in $(seq 1 "$REPS"); do
         [[ -n ${xmpi:-} ]] && IFS=, read -ra mpiargs <<< "$xmpi"
         cool=$(cooldown)
         ac=$(ac_online)
+        load1=$(cut -d' ' -f1 /proc/loadavg)
+        r0=$(pkg_uj); w0=$(date +%s.%N)
         if [[ $cpus == none ]]; then
             line=$(env "${envs[@]}" OMP_NUM_THREADS=$threads OMP_SCHEDULE=$sched OMP_PROC_BIND=false \
                    timeout 900 mpirun -np "$ranks" --bind-to none --oversubscribe "${mpiargs[@]}" "$BIN" "$m" "$TOL" "$ITERS" | grep '^matrix=' || true)
@@ -101,9 +135,11 @@ for rep in $(seq 1 "$REPS"); do
             line=$(env "${envs[@]}" CPUS=$cpus OMP_NUM_THREADS=$threads OMP_SCHEDULE=$sched \
                    timeout 900 mpirun -np "$ranks" --bind-to none --oversubscribe "${mpiargs[@]}" src/bind.sh "$BIN" "$m" "$TOL" "$ITERS" | grep '^matrix=' || true)
         fi
+        r1=$(pkg_uj); w1=$(date +%s.%N)
+        erun=$(pkg_delta_j "$r0" "$r1"); wall=$(awk -v a="$w0" -v b="$w1" 'BEGIN { printf "%.3f", b - a }')
         done_n=$((done_n + 1))
         if [[ -z $line ]]; then echo "[$done_n/$total] FAILED $label $ranks x $threads $m" >&2; continue; fi
-        echo "$line" | awk -v cols="$COLS" -v pre="$(date -Is),$rep,$label,${cpus//,/;},$ac,$cool" '
+        echo "$line" | awk -v cols="$COLS" -v pre="$(date -Is),$rep,$label,${cpus//,/;},$ac,$cool,$load1,$wall,$erun" '
             { for (i = 1; i <= NF; i++) { split($i, kv, "="); v[kv[1]] = kv[2] } }
             END { n = split(cols, c, " "); s = pre
                   for (i = 1; i <= n; i++) { x = v[c[i]]; gsub(",", ";", x); s = s "," x }

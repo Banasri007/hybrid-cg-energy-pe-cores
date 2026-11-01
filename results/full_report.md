@@ -3,11 +3,11 @@
 ## Data quality
 
 - runs: 765 total, 0 throttled (excluded), 0 on battery/unknown power (excluded), 765 kept
-- iteration count IDENTICAL across configs for thermal2.rcm.csr
-- iteration count IDENTICAL across configs for cant.rcm.csr
-- iteration count IDENTICAL across configs for apache2.rcm.csr
-- iteration count IDENTICAL across configs for G3_circuit.rcm.csr
-- iteration count IDENTICAL across configs for ecology2.rcm.csr
+- G3_circuit.rcm.csr: fixed 1000-1000 iterations per run (work-normalised mode)
+- apache2.rcm.csr: fixed 1000-1000 iterations per run (work-normalised mode)
+- cant.rcm.csr: fixed 1000-1000 iterations per run (work-normalised mode)
+- ecology2.rcm.csr: fixed 1000-1000 iterations per run (work-normalised mode)
+- thermal2.rcm.csr: fixed 1000-1000 iterations per run (work-normalised mode)
 - idle baseline: pkg 0.34 W, core 0.03 W, uncore 0.00 W, psys 0.81 W
 
 ## Per-matrix results (median over reps)
@@ -74,6 +74,9 @@
 - **RQ2** P4 1x4 vs E4 1x4: E-cores take 2.63x the time, 1.06x the package energy
 - **RQ2** P4 2x2 vs E4 2x2: E-cores take 2.60x the time, 1.05x the package energy
 - **RQ2** P4 4x1 vs E4 4x1: E-cores take 2.57x the time, 1.04x the package energy
+- **RQ2** P4 1x4 vs E4s 1x4: E-cores take 1.71x the time, 0.70x the package energy
+- **RQ2** P4 2x2 vs E4s 2x2: E-cores take 1.69x the time, 0.70x the package energy
+- **RQ2** P4 4x1 vs E4s 4x1: E-cores take 1.68x the time, 0.69x the package energy
 - **RQ2** P8ht 1x8 vs E8 1x8: E-cores take 1.36x the time, 0.79x the package energy
 - **RQ2** P8ht 4x2 vs E8 4x2: E-cores take 1.36x the time, 0.79x the package energy
 - **RQ2** P8ht 2x4 vs E8 2x4: E-cores take 1.36x the time, 0.80x the package energy
@@ -145,6 +148,9 @@
 - **RQ2** P4 2x2 vs E4 2x2: E-cores take 2.84x the time, 1.00x the package energy
 - **RQ2** P4 4x1 vs E4 4x1: E-cores take 2.80x the time, 0.98x the package energy
 - **RQ2** P4 1x4 vs E4 1x4: E-cores take 2.75x the time, 1.06x the package energy
+- **RQ2** P4 2x2 vs E4s 2x2: E-cores take 1.74x the time, 0.76x the package energy
+- **RQ2** P4 4x1 vs E4s 4x1: E-cores take 1.73x the time, 0.73x the package energy
+- **RQ2** P4 1x4 vs E4s 1x4: E-cores take 1.71x the time, 0.80x the package energy
 - **RQ2** P8ht 1x8 vs E8 1x8: E-cores take 1.65x the time, 0.79x the package energy
 - **RQ2** P8ht 2x4 vs E8 2x4: E-cores take 1.67x the time, 0.76x the package energy
 - **RQ2** P8ht 4x2 vs E8 4x2: E-cores take 1.65x the time, 0.77x the package energy
@@ -216,6 +222,9 @@
 - **RQ2** P4 1x4 vs E4 1x4: E-cores take 2.45x the time, 0.97x the package energy
 - **RQ2** P4 4x1 vs E4 4x1: E-cores take 2.37x the time, 0.84x the package energy
 - **RQ2** P4 2x2 vs E4 2x2: E-cores take 2.32x the time, 0.95x the package energy
+- **RQ2** P4 1x4 vs E4s 1x4: E-cores take 1.60x the time, 0.86x the package energy
+- **RQ2** P4 4x1 vs E4s 4x1: E-cores take 1.54x the time, 0.75x the package energy
+- **RQ2** P4 2x2 vs E4s 2x2: E-cores take 1.51x the time, 0.83x the package energy
 - **RQ2** P8ht 1x8 vs E8 1x8: E-cores take 1.70x the time, 0.73x the package energy
 - **RQ2** P8ht 4x2 vs E8 4x2: E-cores take 1.72x the time, 0.73x the package energy
 - **RQ2** P8ht 2x4 vs E8 2x4: E-cores take 1.71x the time, 0.73x the package energy
@@ -287,6 +296,9 @@
 - **RQ2** P4 4x1 vs E4 4x1: E-cores take 2.90x the time, 1.12x the package energy
 - **RQ2** P4 1x4 vs E4 1x4: E-cores take 2.88x the time, 1.13x the package energy
 - **RQ2** P4 2x2 vs E4 2x2: E-cores take 2.72x the time, 1.08x the package energy
+- **RQ2** P4 4x1 vs E4s 4x1: E-cores take 1.86x the time, 0.73x the package energy
+- **RQ2** P4 1x4 vs E4s 1x4: E-cores take 1.84x the time, 0.73x the package energy
+- **RQ2** P4 2x2 vs E4s 2x2: E-cores take 1.74x the time, 0.71x the package energy
 - **RQ2** P8ht 1x8 vs E8 1x8: E-cores take 1.54x the time, 0.83x the package energy
 - **RQ2** P8ht 2x4 vs E8 2x4: E-cores take 1.55x the time, 0.82x the package energy
 - **RQ2** P8ht 4x2 vs E8 4x2: E-cores take 1.54x the time, 0.83x the package energy
@@ -358,6 +370,9 @@
 - **RQ2** P4 2x2 vs E4 2x2: E-cores take 2.12x the time, 0.94x the package energy
 - **RQ2** P4 1x4 vs E4 1x4: E-cores take 2.09x the time, 0.94x the package energy
 - **RQ2** P4 4x1 vs E4 4x1: E-cores take 2.12x the time, 0.93x the package energy
+- **RQ2** P4 2x2 vs E4s 2x2: E-cores take 1.63x the time, 0.77x the package energy
+- **RQ2** P4 1x4 vs E4s 1x4: E-cores take 1.60x the time, 0.77x the package energy
+- **RQ2** P4 4x1 vs E4s 4x1: E-cores take 1.62x the time, 0.77x the package energy
 - **RQ2** P8ht 1x8 vs E8 1x8: E-cores take 1.33x the time, 0.81x the package energy
 - **RQ2** P8ht 2x4 vs E8 2x4: E-cores take 1.35x the time, 0.81x the package energy
 - **RQ2** P8ht 8x1 vs E8 8x1: E-cores take 1.35x the time, 0.82x the package energy

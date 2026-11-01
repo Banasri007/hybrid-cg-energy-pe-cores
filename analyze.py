@@ -45,6 +45,16 @@ def idle_baseline(meta_path):
     return {k: float(v) for k, v in d.items() if float(v) >= 0}
 
 
+def meta_tol(meta_path):
+    """tolerance used for the sweep (0 = fixed-iteration mode)"""
+    if os.path.exists(meta_path):
+        for line in reversed(open(meta_path).readlines()):
+            m = re.search(r"\btol: ([0-9.eE+-]+)", line)
+            if m:
+                return float(m.group(1))
+    return 0.0
+
+
 def main(path):
     base = path[:-4]
     rows = list(csv.DictReader(open(path)))
@@ -59,12 +69,24 @@ def main(path):
     keep = [r for r in rows if r not in bad_ac and r not in throttled]
     notes.append(f"runs: {len(rows)} total, {len(throttled)} throttled (excluded), "
                  f"{len(bad_ac)} on battery/unknown power (excluded), {len(keep)} kept")
-    iters_by_m = defaultdict(set)
+    # correctness: identical iteration counts are NOT required (summation order
+    # changes with the decomposition). In tolerance mode every run must converge
+    # to the same tolerance and its true residual ||b-Ax||/||b|| must meet it.
+    tol = meta_tol(base + ".meta.txt")
+    iters_by_m = defaultdict(list)
     for r in keep:
-        iters_by_m[r["matrix"]].add(r["iters"])
-    for m, s in iters_by_m.items():
-        notes.append(f"iteration count {'IDENTICAL' if len(s) == 1 else 'MISMATCH ' + str(sorted(s))} "
-                     f"across configs for {os.path.basename(m)}")
+        iters_by_m[r["matrix"]].append(int(r["iters"]))
+    for m, its in sorted(iters_by_m.items()):
+        name = os.path.basename(m)
+        if tol > 0:
+            rs = [r for r in keep if r["matrix"] == m]
+            bad = [r for r in rs if r["converged"] != "1" or fnum(r["true_rel_res"]) > 1.05 * tol]
+            worst = max(fnum(r["true_rel_res"]) for r in rs)
+            notes.append(f"{name}: tol {tol:g}; {len(rs) - len(bad)}/{len(rs)} runs converged with true "
+                         f"relative residual <= tol (max {worst:.2e}); iterations {min(its)}-{max(its)} "
+                         f"(spread {100 * (max(its) - min(its)) / min(its):.1f}%)")
+        else:
+            notes.append(f"{name}: fixed {min(its)}-{max(its)} iterations per run (work-normalised mode)")
     have_energy = any(fnum(r["e_pkg_j"]) >= 0 for r in keep)
     if not have_energy:
         notes.append("RAPL energy not available in this CSV (all -1): runtime-only analysis")
@@ -81,18 +103,30 @@ def main(path):
         t = np.array([fnum(r["time_s"]) for r in rs])
         e = np.array([fnum(r["e_pkg_j"]) for r in rs])
         e = e[e >= 0]
-        it = int(rs[0]["iters"])
+        it = float(np.mean([int(r["iters"]) for r in rs]))
+        pw = np.array([fnum(r["e_pkg_j"]) / fnum(r["time_s"]) for r in rs if fnum(r["e_pkg_j"]) >= 0])
+        erun = np.array([fnum(r.get("e_pkg_run_j", "-1")) for r in rs])
+        erun = erun[erun >= 0]
         s = dict(matrix=os.path.basename(m).replace(".rcm.csr", ""), label=label,
                  cls=core_class(label), ranks=R, threads=T, cfg=f"{label} {R}x{T}{dyn}",
                  n=len(rs), time_med=float(np.median(t)),
                  time_cv=float(100 * t.std(ddof=1) / t.mean()) if len(t) > 1 else float("nan"),
                  e_pkg_med=float(np.median(e)) if len(e) else float("nan"),
                  e_cv=float(100 * e.std(ddof=1) / e.mean()) if len(e) > 1 else float("nan"),
-                 iters=it,
+                 iters=it, iters_min=min(int(r["iters"]) for r in rs), iters_max=max(int(r["iters"]) for r in rs),
+                 time_mean=float(t.mean()), time_sd=float(t.std(ddof=1)) if len(t) > 1 else 0.0,
+                 e_mean=float(e.mean()) if len(e) else float("nan"),
+                 e_sd=float(e.std(ddof=1)) if len(e) > 1 else 0.0,
+                 p_mean=float(pw.mean()) if len(pw) else float("nan"),
+                 p_sd=float(pw.std(ddof=1)) if len(pw) > 1 else 0.0,
+                 e_run_mean=float(erun.mean()) if len(erun) else float("nan"),
+                 true_res_max=max(fnum(r["true_rel_res"]) for r in rs),
                  halo_frac=float(np.median([fnum(r["halo_s"]) / fnum(r["time_s"]) for r in rs])),
                  allred_frac=float(np.median([fnum(r["allreduce_s"]) / fnum(r["time_s"]) for r in rs])))
         s["power_w"] = s["e_pkg_med"] / s["time_med"]
         s["iters_per_j"] = it / s["e_pkg_med"]
+        s["ms_per_iter"] = 1e3 * s["time_mean"] / it
+        s["mj_per_iter"] = 1e3 * s["e_mean"] / it
         s["e_dyn_med"] = s["e_pkg_med"] - idle["pkg"] * s["time_med"] if "pkg" in idle else float("nan")
         summary.append(s)
 
@@ -105,9 +139,10 @@ def main(path):
             s["speedup_vs_P1"] = ref["time_med"] / s["time_med"] if ref else float("nan")
             s["energy_vs_P1"] = s["e_pkg_med"] / ref["e_pkg_med"] if ref else float("nan")
 
-    cols = ["matrix", "cfg", "cls", "ranks", "threads", "n", "iters", "time_med", "time_cv",
-            "speedup_vs_P1", "e_pkg_med", "e_cv", "e_dyn_med", "energy_vs_P1", "power_w",
-            "iters_per_j", "halo_frac", "allred_frac"]
+    cols = ["matrix", "cfg", "cls", "ranks", "threads", "n", "iters", "iters_min", "iters_max",
+            "true_res_max", "time_med", "time_mean", "time_sd", "time_cv", "speedup_vs_P1",
+            "e_pkg_med", "e_mean", "e_sd", "e_cv", "e_dyn_med", "energy_vs_P1", "power_w", "p_mean",
+            "p_sd", "e_run_mean", "ms_per_iter", "mj_per_iter", "iters_per_j", "halo_frac", "allred_frac"]
     with open(base + "_summary.csv", "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=cols, extrasaction="ignore")
         w.writeheader()
@@ -143,7 +178,8 @@ def main(path):
                           f"frugal is {frugal['time_med']/fastest['time_med']:.2f}x slower"))
         # RQ2: P vs E at matched core counts, same split
         idx = {s["cfg"]: s for s in ss}
-        pairs = [(p, e) for p, e in [("P1", "E1"), ("P4", "E4"), ("P8ht", "E8")]]
+        pairs = [("P1", "E1"), ("P2", "E2"), ("P2", "E2s"), ("P3", "E3"), ("P3", "E3s"),
+                 ("P4", "E4"), ("P4", "E4s"), ("P8ht", "E8")]
         for p, e in pairs:
             for s in ss:
                 if s["label"] == p and not s["cfg"].endswith("dyn"):

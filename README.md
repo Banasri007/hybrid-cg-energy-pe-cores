@@ -46,6 +46,10 @@ CPUS=0,2,4,6 OMP_NUM_THREADS=2 OMP_SCHEDULE=static mpirun -np 2 --bind-to none s
 REPS=3 ITERS=300 OUT=results/pilot.csv ./sweep.sh configs/pilot.txt
 REPS=3 ITERS=1000 OUT=results/full.csv ./sweep.sh configs/full.txt   # ~2.5 h
 python3 analyze.py results/full.csv
+
+# experiments added after the synopsis review (equal-core-count P vs E, mixed configs; tol 1e-8; ~4 h)
+./revision_runs.sh
+python3 report/make_figures.py && python3 report/build_report.py
 ```
 
 `cg_hybrid <matrix> <tol> <maxit>`: `tol = 0` runs exactly `maxit` iterations (used for all
