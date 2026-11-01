@@ -40,8 +40,7 @@ References
 - IEEE style, numbered in order of first citation (already numbered — keep). 11 pt, hanging indent 0.25 in.
 
 Placeholders
-- "[[FILL …]]" = numbers from experiments still running. Do NOT build the final document while any remain;
-  ask the user for the updated Markdown.
+- Complete the title-page details before submission.
 - "[bracketed text]" on the title page = team details to fill; highlight yellow.
 
 Appendix A
@@ -81,7 +80,7 @@ Manipal Institute of Technology, Manipal Academy of Higher Education, Manipal
 
 # Abstract
 
-Modern x86 processors combine fast performance cores (P-cores) with smaller efficiency cores (E-cores), but parallel scientific codes are still tuned as if all cores were alike. This project studies how this heterogeneity affects the runtime and energy of a hybrid MPI+OpenMP Conjugate Gradient (CG) solver for sparse symmetric positive-definite systems on an Intel Core i5-13500H, which has 4 Hyper-Threaded P-cores and 8 E-cores. We implemented the solver with a nonzero-balanced row-block decomposition, halo exchange and threaded sparse matrix-vector products. We applied Reverse Cuthill–McKee reordering and measured energy with Intel RAPL package counters, read once per run between barriers. Five SuiteSparse matrices were solved, without a preconditioner, to the same relative-residual tolerance of 10⁻⁸ in three repetitions in randomised order, with solution accuracy verified for every run. At equal physical core counts (one to four cores), [[FILL-ABS-A: one-sentence P-vs-E result with numbers]]. Across all configurations, the fastest (all 16 hardware threads) and the most energy-efficient (E-cores only) differ on every matrix: [[FILL-ABS-B: energy and time ratios]]. A 51-configuration survey with 765 runs and hardware performance counters showed that pure MPI on mixed P+E cores uses 1.5–1.8× more energy than OpenMP at the same runtime. The cause is waiting P-core ranks busy-polling MPI's shared-memory queues without the low-power PAUSE instruction, which waiting OpenMP threads execute in 38% of their cycles. Core type, core placement and the MPI/OpenMP split are therefore energy decisions on heterogeneous processors, not only performance decisions.
+Modern x86 processors combine fast performance cores (P-cores) with smaller efficiency cores (E-cores), but parallel scientific codes are still tuned as if all cores were alike. This project studies how this heterogeneity affects the runtime and energy of a hybrid MPI+OpenMP Conjugate Gradient (CG) solver for sparse symmetric positive-definite systems on an Intel Core i5-13500H, which has 4 Hyper-Threaded P-cores and 8 E-cores. We implemented the solver with a nonzero-balanced row-block decomposition, halo exchange and threaded sparse matrix-vector products. We applied Reverse Cuthill–McKee reordering and measured energy with Intel RAPL package counters, read once per run between barriers. Five SuiteSparse matrices were solved, without a preconditioner, to the same relative-residual tolerance of 10⁻⁸ in randomised repeated runs (three per group in Experiment B; three or four in Experiment A), with solution accuracy verified for every run. At equal physical core counts (one to four cores), P-cores are faster in every matched comparison, while four spread E-cores save 12.2–27.9% package energy versus four P-cores at 1.62–1.93× the runtime. Across the observed means in Experiments A and B, the fastest and the most energy-efficient configurations differ on every matrix: the fastest observed mean uses 1.24–1.37× the energy of the minimum-energy configuration, which takes 1.42–1.95× as long. A 51-configuration survey with 765 runs and hardware performance counters showed that pure MPI on mixed P+E cores uses 1.5–1.8× more energy than OpenMP at the same runtime. The cause is waiting P-core ranks busy-polling MPI's shared-memory queues with little PAUSE activity; OpenMP runs instead spend about 38% of measured P-core cycles in PAUSE. Core type, core placement and the MPI/OpenMP split are therefore energy decisions on heterogeneous processors, not only performance decisions.
 
 **Keywords:** hybrid MPI+OpenMP; Conjugate Gradient; heterogeneous processors; P-cores and E-cores; energy efficiency; Intel RAPL
 
@@ -176,7 +175,7 @@ To design and implement an energy-instrumented hybrid MPI+OpenMP Conjugate Gradi
 
 1. **O1:** To implement and validate a hybrid MPI+OpenMP CG solver (row-block MPI decomposition, halo exchange, OpenMP-threaded SpMV) that converges every test matrix to a true relative residual ≤ 10⁻⁸ in every configuration.
 2. **O2:** To develop a measurement harness that records time-to-solution and processor-package energy (RAPL, measured once per run between barriers), with pinning, thermal control, pre-defined exclusion rules and randomised repeated runs, achieving run-to-run variation (CV) below 2% for pinned configurations.
-3. **O3:** To evaluate P-core-only versus E-core-only execution at equal physical core counts of 1–4, and mixed/full-chip configurations separately, on five SuiteSparse SPD matrices, reporting time- and energy-to-solution as mean ± SD over three runs.
+3. **O3:** To evaluate P-core-only versus E-core-only execution at equal physical core counts of 1–4, and mixed/full-chip configurations separately, on five SuiteSparse SPD matrices, reporting time- and energy-to-solution as mean ± SD over repeated runs, with actual sample counts disclosed.
 4. **O4:** To compare the runtime-optimal and energy-optimal configurations (RQ1), the core types (RQ2) and the default scheduler versus pinning (RQ3), quantifying each difference as a time ratio and an energy ratio, and to explain the mechanism behind any unexpected energy difference.
 
 Table 2.1 maps each objective to the section where its result is reported.
@@ -185,9 +184,9 @@ Table 2.1: Objective–outcome mapping.
 
 | Objective | Where it is addressed | Achieved? (Yes / Partly / No) |
 |---|---|---|
-| O1 | Sections 5.2, 5.5, 6.3.1 | [[FILL-O1]] |
-| O2 | Sections 3.6, 5.2.4, 6.1, 6.3 | [[FILL-O2]] |
-| O3 | Sections 6.3.2, 6.3.3, 7.1 | [[FILL-O3]] |
+| O1 | Sections 5.2, 5.5, 6.3.1 | Yes — all 348 A/B runs satisfy the true-residual tolerance |
+| O2 | Sections 3.6, 5.2.4, 6.1, 6.3 | Partly — instrumentation complete; some pinned groups exceed the 2% CV target |
+| O3 | Sections 6.3.2, 6.3.3, 7.1 | Yes — 55 matrix/configuration groups in each experiment, with actual sample counts reported |
 | O4 | Sections 6.3.4, 6.3.5, 7.1, 7.2 | Yes |
 
 ---
@@ -361,7 +360,7 @@ The choices below answer the limitations listed in Section 1.3 and draw on the l
 - **CG without a preconditioner:** keeps the kernel structure identical across configurations (Section 3.3).
 - **Hybrid MPI+OpenMP:** both models are needed to study the process×thread split, and prior work disagrees on the value of the hybrid model [4], [7], [8].
 - **Nonzero-balanced row blocks:** this equalises *work*, which is the standard choice. On heterogeneous cores equal work is not equal *time*, and measuring the consequence is part of the study.
-- **RCM:** the cheapest standard way to make row-block halos small. The remaining communication takes at most about 7% of runtime (Section 6.3.4), so the study measures core behaviour, not a bad partition.
+- **RCM:** the cheapest standard way to make row-block halos small. Pinned configurations have median halo-exchange fractions up to about 7% in Experiment C (Section 6.3.4); collective reductions and unpinned configurations can incur substantially larger overheads.
 - **Powercap RAPL, read once by one process:** the package counter already covers all cores, so summing per-process readings would count the same energy several times. Raffin and Trystram document such pitfalls in RAPL tools [18].
 - **Same tolerance for all configurations:** this compares *energy-to-solution*. Iteration counts are recorded, not forced to be equal, because the summation order changes with the decomposition [20].
 - **Explicit pinning:** reproducible, and needed to compare core types. Unpinned runs are the RQ3 baseline [2], [11].
@@ -397,7 +396,7 @@ Table 3.3: Evaluation metrics.
 | Energy ratio | *E* / *E*(reference); reference P4 1×4 (four P-cores) unless stated | Compares configurations measured with the same instrument |
 | Time and energy per iteration | *T*/*k*, *E*/*k* (*k* = iterations) | Explains time differences caused by slightly different iteration counts |
 | Accuracy | true residual ‖b − Ax‖₂/‖b‖₂ (must be ≤ τ) and max |xᵢ − 1| | Verifies every solution independently of the solver's own residual |
-| Repeatability | mean ± SD over 3 runs; CV = SD/mean | Shows whether differences exceed run-to-run noise |
+| Repeatability | mean ± sample SD over the actual n (A: 3–4; B–D: 3); CV = SD/mean | Shows whether differences exceed run-to-run noise |
 | Wait fraction | time inside `MPI_Allreduce` / *T*; P-core PAUSE cycles / P-core cycles (perf) | Explains energy lost to load imbalance |
 
 ## 3.7 Tools and Technologies
@@ -429,7 +428,7 @@ Table 3.4: Tools and technologies.
   - **FR5:** The system shall summarise the CSV (mean ± SD, ratios, RQ1–RQ3) and plot the results.
 - **Non-functional requirements (with target values):**
   - Performance: at least 2× speedup over one P-core with four P-cores, on every matrix.
-  - Reliability and correctness: true relative residual ≤ 10⁻⁸ in 100% of runs; run-to-run CV < 2% for pinned configurations; package temperature ≤ 55 °C at the start of every run.
+  - Reliability and correctness: true relative residual ≤ 10⁻⁸ in 100% of runs; run-to-run CV < 2% for pinned configurations; target package temperature ≤ 55 °C before launch (not a guaranteed solve-start temperature; see Section 7.5).
   - Measurement overhead: energy counters read only twice per run (no sampling during the solve).
   - Usability and reproducibility: a whole experiment runs from one command with no manual steps after start.
   - Security: no part of the system runs as root. Energy counters are made readable only temporarily, until the next reboot.
@@ -724,7 +723,7 @@ Rank *r* takes entries *r·T … r·T+T−1* of the CPU list. One OpenMP place i
   1. Record power settings, RAPL domains and the exclusion rule.
   2. Measure idle power and abort above 5 W.
   3. Shuffle all (matrix, configuration) pairs in each repetition.
-  4. Before each run, wait at least 5 s and until the package is at or below 55 °C.
+  4. Before each launch, wait at least 5 s, then poll until package temperature is at or below 55 °C or the 120 s wait limit is reached.
   5. Log the load average and measure whole-run energy.
   6. Append one CSV row.
 
@@ -787,7 +786,7 @@ for m, its in sorted(iters_by_m.items()):
                      f"iterations {min(its)}-{max(its)}")
 ```
 
-Runs are excluded only by the rule fixed before the experiments; slow runs are never removed. Correctness is judged by the independently computed true residual, while differing iteration counts are reported and not treated as errors.
+Runs are excluded only by the rule fixed before the experiments; slow runs are never removed. The analysis script’s diagnostic uses a 5% margin (1.05τ), as shown in the snippet. For this report, all 348 A/B raw rows were also checked directly against the stricter bound τ and passed; the stated correctness result does not rely on that margin. Differing iteration counts are reported and not treated as errors.
 
 ## 5.3 Integration of Modules
 
@@ -808,9 +807,9 @@ Table 5.1: Key parameters.
 |---|---|---|
 | Stopping tolerance τ (Experiments A, B) | 10⁻⁸ relative residual, cap 20,000 iterations | Same accuracy for every configuration; all matrices converge within the cap |
 | Fixed iterations (Experiment C) | 1000 per run | Identical work in all 51 configurations; runs ≥ 0.7 s give stable energy readings |
-| Repetitions | 3 per (matrix, configuration) | Mean ± SD; pinned CV was below 2% in pilots |
+| Repetitions | Planned 3 per (matrix, configuration); A retained 3–4, B–D retained 3 | Mean ± sample SD; actual n disclosed; the pinned CV target was not met by every group |
 | Run order | Shuffled within each repetition | Spreads drift (heat soak, background load) over configurations |
-| Cooldown | ≥ 5 s and package ≤ 55 °C | Each run starts from a similar thermal state |
+| Cooldown | ≥ 5 s; pre-launch target ≤ 55 °C; maximum wait 120 s | Does not guarantee a common solve-start temperature after setup; recorded temperatures are discussed in Section 7.5 |
 | Exclusion rule (fixed before the runs) | Exclude only runs with a thermal-throttle event or not on AC power | Objective; slow runs are never removed by hand |
 | Idle-power abort threshold | 5 W package | Detects background activity before a sweep |
 | OpenMP schedule | `static` (also `dynamic,64` in Experiment C) | Static has the lowest overhead; dynamic tests imbalance handling |
@@ -831,7 +830,7 @@ Table 5.2: Test cases.
 | TC01 | Sequential CG on 2-D Poisson | 64×64 and 256×256 grids, τ = 10⁻¹⁰ | Converges; max error ≈ τ | 135 and 526 iterations; max error 8.3×10⁻¹¹ and 9.0×10⁻¹⁰ | Pass |
 | TC02 | Matrix Market reader with symmetric expansion | Lower-triangle `.mtx` of 20×20 Poisson | Same iterations and residual as the built-in generator | Identical (41 iterations, 4.32×10⁻¹¹) | Pass |
 | TC03 | Hybrid CG vs sequential, different splits | 256×256 Poisson; 1×1, 1×4, 4×1, 2×2, 3×2, 8×2, 16×1 | Same iterations and residual as sequential | All 526 iterations, residual 9.84×10⁻¹¹ | Pass |
-| TC04 | Hybrid CG on real matrices, all configurations | 5 SuiteSparse matrices, τ = 10⁻⁸ | Every run converges; true residual ≤ τ | [[FILL-TC04]] | [[FILL]] |
+| TC04 | Hybrid CG on real matrices, all configurations | 5 SuiteSparse matrices, τ = 10⁻⁸ | Every run converges; true residual ≤ τ | 348/348 converged; maximum true relative residual 1.000×10⁻⁸ | Pass |
 | TC05 | RCM correctness | thermal2, G3_circuit | Symmetric result, same row-sum multiset, bandwidth similar to SciPy | Symmetric, row sums equal; bandwidth 925 vs 842 and 5,068 vs 8,017 | Pass |
 | TC06 | Pinning | 2×2 on CPUs 0,2,4,6; 4×1 on 8–11 | Each thread on its assigned CPU | Threads on 0,2 / 4,6 and on 8, 9, 10, 11 | Pass |
 | TC07 | Pinning error handling | 2 ranks × 2 threads, only 2 CPUs given | Clear error, no run | "rank 1 needs 4 CPUs but CPUS has 2" | Pass |
@@ -858,7 +857,7 @@ Table 5.3: Challenges and solutions.
 | Huge halos for badly ordered matrices (up to 220k ghost entries per rank) | Reverse Cuthill–McKee reordering (up to 160× smaller halos) |
 | Iteration counts differ slightly between configurations | Same tolerance for all runs; iterations and true residual recorded and checked; per-iteration metrics |
 | Background activity inflated the idle baseline (13 W instead of 0.3 W) | Idle-power check with abort at 5 W, load average logged per run, idle baseline re-measured with apps closed |
-| Thermal throttling risk on a laptop | Cooldown to ≤ 55 °C before each run; throttle counters checked; no run was throttled |
+| Thermal throttling risk on a laptop | Pre-launch cooldown target ≤ 55 °C with a wait limit; throttle counters checked; no recorded A/B run was throttled |
 | Unexplained 1.6× energy penalty of pure MPI on mixed cores | Waiting-policy experiment and hardware counters (Experiment D) |
 
 ---
@@ -880,40 +879,47 @@ Table 6.1: Hardware, software and measurement conditions.
 | Memory / OS | 16 GB; Ubuntu 22.04, Linux 6.8.0 (native) |
 | RAPL domains available | package-0, core, uncore, psys (no DRAM) |
 | Power settings | `powersave`, EPP `balance_performance`, turbo on, platform profile `balanced`, AC power |
-| Idle power | 0.34 W package, 0.81 W psys (apps closed) |
-| Experiment A (equal core counts) | 11 configurations × 5 matrices × 3 repetitions, τ = 10⁻⁸ |
+| Separately measured clean idle baseline | 0.34 W package, 0.81 W psys (apps closed); sweep-start idle measurements are recorded separately in metadata |
+| Experiment A (equal core counts) | 11 configurations × 5 matrices; 183 runs (37 groups × 3, 18 groups × 4), τ = 10⁻⁸ |
 | Experiment B (mixed / full chip) | 11 configurations × 5 matrices × 3 repetitions, τ = 10⁻⁸ |
 | Experiment C (survey) | 51 configurations × 5 matrices × 3 repetitions = 765 runs, 1000 iterations each |
 | Experiment D (waiting policy, counters) | 13 configurations × 3 matrices × 3 repetitions; `perf` on 7 configurations × 2 repetitions |
-| Conditions | Shuffled order; cooldown to ≤ 55 °C; idle check ≤ 5 W; exclusion only for throttling or battery power |
+| Conditions | Shuffled order; pre-launch cooldown target ≤ 55 °C with a 120 s wait limit; idle check ≤ 5 W for A/B; exclusion only for throttling or battery/unknown power |
 
 ## 6.2 Output Screenshots
 
-Figure 6.1 shows the output of one run. Rank 0 prints a single line containing:
-- the configuration;
-- convergence data and verified accuracy;
-- timing;
-- energy per RAPL domain;
-- temperatures;
-- the CPU each thread finished on.
+Figure 6.1 shows the Experiment A sweep driver’s terminal output: the launch command, processor and power settings, tolerance, RAPL availability, exclusion rule and initial run summaries. Each summary reports the repetition, configuration, matrix, solve time, package energy and cooldown duration. All 25 fully visible run times and energies match the corresponding CSV rows at the displayed precision. Full residual, solution-error and temperature fields are recorded in the CSV, rather than displayed in these progress lines.
 
-![Figure 6.1: Output of one solver run (4 OpenMP threads pinned to the four P-cores, thermal2, τ = 10⁻⁸).](figures/fig_sample_output.png)
+![Figure 6.1: Original terminal screenshot of the equalcount sweep launched at 14:03:34 on 1 November 2026, showing measurement settings and initial run summaries.](figures/fig_sample_output.png)
 
-[[FILL-FIG6.1: terminal screenshot of one real run line from Experiment A]]
+The progress denominator of 165 refers to this sweep invocation. The retained equalcount CSV also includes 18 earlier observations, giving 183 runs in total; the screenshot and CSV therefore describe different scopes, not conflicting run counts. The displayed 0.565 W idle package power is this invocation’s startup measurement; the separate 0.34 W idle measurement in Table 6.1 is the clean baseline used for optional dynamic-energy estimates. Tables 6.3–6.5 report measured package energy without idle subtraction.
 
 ## 6.3 Quantitative Results
 
-All values are mean ± standard deviation over three runs. Energy is processor-package energy.
+Tables 6.3–6.5 report arithmetic mean ± sample standard deviation (ddof = 1), computed from the retained raw CSV rows. Experiment A has n = 3 or 4 as shown; Experiment B has n = 3. Ratios in the A/B discussion are ratios of means. Sweep reports in results/ use medians and can therefore differ numerically. Energy is processor-package energy; supplementary tables retain their stated aggregation conventions.
 
 ### 6.3.1 Correctness and data quality
 
-[[FILL-6.3.1: Experiments A/B — runs kept and excluded, all converged, max true residual, iteration range and spread per matrix, max error. Experiment C — 765/765 runs kept, 0 throttled, median CV 0.3% (time) and 0.7% (energy).]]
+Experiments A and B retained all 183 and 165 recorded runs, respectively: none was throttled and all were on AC power. All 348 runs report convergence and satisfy the strict true relative residual bound ≤ 10⁻⁸; the maximum recorded value is 1.000×10⁻⁸. The largest absolute solution error is 1.530×10⁻³ (G3_circuit). Residual and solution error are distinct quantities; a small residual does not imply equally small forward error. Iteration spread is 100(max − min)/min within each matrix and experiment.
+
+Experiment A contains two recorded sweep starts and 18 repeated configuration/repetition keys: 37 groups have n = 3 and 18 have n = 4. All valid measurements are retained under the pre-defined exclusion rule; no observation is discarded because of runtime or energy. Experiment B has n = 3 for each of its 55 groups. Repeated repetition labels do not identify independent sweep sessions, so the actual row count, rather than the repetition label, determines n. These small, uneven samples and session effects limit precise ranking. Experiment C retained all 765 runs; median group CVs are 0.31% for time and 0.70% for energy, grouping static and dynamic schedules separately.
 
 Table 6.2 gives, for each matrix, the iteration counts and the verified accuracy of all runs.
 
 Table 6.2: Iterations to τ = 10⁻⁸ and verified accuracy (Experiments A and B).
 
-[[FILL-TABLE-6.2]]
+| Matrix | Experiment | Runs | Iterations | Spread | Max true relative residual | Max absolute solution error |
+|---|---|---|---|---|---|---|
+| G3_circuit | A | 35 | 6602–6678 | 1.15% | 9.995e-09 | 1.530e-03 |
+| G3_circuit | B | 33 | 6605–6651 | 0.70% | 9.983e-09 | 1.523e-03 |
+| apache2 | A | 39 | 4923–4932 | 0.18% | 9.695e-09 | 3.072e-09 |
+| apache2 | B | 33 | 4914–4927 | 0.26% | 9.967e-09 | 3.321e-09 |
+| cant | A | 37 | 9498–9584 | 0.91% | 9.999e-09 | 6.658e-05 |
+| cant | B | 33 | 9464–9531 | 0.71% | 9.991e-09 | 6.700e-05 |
+| ecology2 | A | 37 | 6233–6233 | 0.00% | 9.950e-09 | 2.752e-09 |
+| ecology2 | B | 33 | 6233–6233 | 0.00% | 9.950e-09 | 2.752e-09 |
+| thermal2 | A | 35 | 4330–4333 | 0.07% | 1.000e-08 | 1.325e-06 |
+| thermal2 | B | 33 | 4330–4332 | 0.05% | 1.000e-08 | 1.322e-06 |
 
 ### 6.3.2 Experiment A: P-cores vs E-cores at equal physical core counts
 
@@ -921,11 +927,123 @@ Tables 6.3 and 6.4 give energy, time and average power for P-cores, packed E-cor
 
 Table 6.3: Energy-to-solution (J) at 1–4 physical cores.
 
-[[FILL-TABLE-6.3]]
+| Matrix | Configuration | n | Package energy (J), mean ± SD |
+|---|---|---|---|
+| G3_circuit | P1 1x1 | 3 | 1002.92 ± 4.62 |
+| G3_circuit | E1 1x1 | 3 | 1103.40 ± 6.12 |
+| G3_circuit | P2 1x2 | 3 | 800.92 ± 6.20 |
+| G3_circuit | E2 1x2 | 3 | 875.85 ± 1.94 |
+| G3_circuit | E2s 1x2 | 4 | 710.08 ± 11.09 |
+| G3_circuit | P3 1x3 | 4 | 808.46 ± 2.25 |
+| G3_circuit | E3 1x3 | 3 | 854.09 ± 2.10 |
+| G3_circuit | E3s 1x3 | 3 | 652.76 ± 3.51 |
+| G3_circuit | P4 1x4 | 3 | 818.95 ± 3.36 |
+| G3_circuit | E4 1x4 | 3 | 877.45 ± 6.95 |
+| G3_circuit | E4s 1x4 | 3 | 590.18 ± 19.30 |
+| apache2 | P1 1x1 | 3 | 387.44 ± 1.10 |
+| apache2 | E1 1x1 | 4 | 429.39 ± 1.13 |
+| apache2 | P2 1x2 | 4 | 305.23 ± 2.45 |
+| apache2 | E2 1x2 | 4 | 373.20 ± 75.07 |
+| apache2 | E2s 1x2 | 4 | 298.27 ± 4.17 |
+| apache2 | P3 1x3 | 3 | 297.29 ± 0.75 |
+| apache2 | E3 1x3 | 4 | 337.42 ± 40.17 |
+| apache2 | E3s 1x3 | 3 | 283.54 ± 0.83 |
+| apache2 | P4 1x4 | 3 | 298.78 ± 1.98 |
+| apache2 | E4 1x4 | 3 | 328.63 ± 2.95 |
+| apache2 | E4s 1x4 | 4 | 257.86 ± 39.76 |
+| cant | P1 1x1 | 4 | 365.43 ± 11.59 |
+| cant | E1 1x1 | 3 | 446.29 ± 4.05 |
+| cant | P2 1x2 | 4 | 282.26 ± 2.35 |
+| cant | E2 1x2 | 3 | 321.13 ± 0.73 |
+| cant | E2s 1x2 | 3 | 307.61 ± 2.94 |
+| cant | P3 1x3 | 3 | 268.52 ± 2.96 |
+| cant | E3 1x3 | 3 | 281.57 ± 0.82 |
+| cant | E3s 1x3 | 4 | 283.50 ± 28.58 |
+| cant | P4 1x4 | 3 | 271.98 ± 2.36 |
+| cant | E4 1x4 | 4 | 306.39 ± 58.02 |
+| cant | E4s 1x4 | 3 | 238.91 ± 0.17 |
+| ecology2 | P1 1x1 | 4 | 564.68 ± 5.90 |
+| ecology2 | E1 1x1 | 3 | 641.80 ± 1.92 |
+| ecology2 | P2 1x2 | 3 | 444.52 ± 1.28 |
+| ecology2 | E2 1x2 | 4 | 576.83 ± 125.98 |
+| ecology2 | E2s 1x2 | 3 | 447.57 ± 0.94 |
+| ecology2 | P3 1x3 | 3 | 436.57 ± 1.38 |
+| ecology2 | E3 1x3 | 4 | 498.18 ± 5.91 |
+| ecology2 | E3s 1x3 | 3 | 429.87 ± 2.22 |
+| ecology2 | P4 1x4 | 3 | 443.20 ± 2.59 |
+| ecology2 | E4 1x4 | 3 | 520.74 ± 22.32 |
+| ecology2 | E4s 1x4 | 4 | 330.10 ± 1.89 |
+| thermal2 | P1 1x1 | 3 | 793.46 ± 4.66 |
+| thermal2 | E1 1x1 | 3 | 862.84 ± 1.55 |
+| thermal2 | P2 1x2 | 3 | 572.17 ± 6.79 |
+| thermal2 | E2 1x2 | 3 | 620.93 ± 6.83 |
+| thermal2 | E2s 1x2 | 4 | 611.73 ± 43.06 |
+| thermal2 | P3 1x3 | 3 | 548.74 ± 1.06 |
+| thermal2 | E3 1x3 | 4 | 551.06 ± 2.94 |
+| thermal2 | E3s 1x3 | 3 | 482.69 ± 4.12 |
+| thermal2 | P4 1x4 | 3 | 556.15 ± 0.89 |
+| thermal2 | E4 1x4 | 3 | 524.00 ± 0.72 |
+| thermal2 | E4s 1x4 | 3 | 426.60 ± 2.86 |
 
 Table 6.4: Time-to-solution (s) and average power (W) at 1–4 physical cores.
 
-[[FILL-TABLE-6.4]]
+| Matrix | Configuration | n | Time (s), mean ± SD | Power (W), mean ± SD |
+|---|---|---|---|---|
+| G3_circuit | P1 1x1 | 3 | 64.342 ± 0.085 | 15.59 ± 0.05 |
+| G3_circuit | E1 1x1 | 3 | 119.402 ± 1.209 | 9.24 ± 0.05 |
+| G3_circuit | P2 1x2 | 3 | 41.504 ± 0.445 | 19.30 ± 0.07 |
+| G3_circuit | E2 1x2 | 3 | 86.168 ± 0.163 | 10.16 ± 0.03 |
+| G3_circuit | E2s 1x2 | 4 | 69.615 ± 0.655 | 10.20 ± 0.09 |
+| G3_circuit | P3 1x3 | 4 | 35.107 ± 0.152 | 23.03 ± 0.09 |
+| G3_circuit | E3 1x3 | 3 | 81.585 ± 0.114 | 10.47 ± 0.03 |
+| G3_circuit | E3s 1x3 | 3 | 63.633 ± 0.281 | 10.26 ± 0.01 |
+| G3_circuit | P4 1x4 | 3 | 31.100 ± 0.238 | 26.33 ± 0.10 |
+| G3_circuit | E4 1x4 | 3 | 81.083 ± 0.150 | 10.82 ± 0.07 |
+| G3_circuit | E4s 1x4 | 3 | 53.271 ± 0.263 | 11.08 ± 0.32 |
+| apache2 | P1 1x1 | 3 | 24.713 ± 0.030 | 15.68 ± 0.03 |
+| apache2 | E1 1x1 | 4 | 46.028 ± 0.536 | 9.33 ± 0.10 |
+| apache2 | P2 1x2 | 4 | 14.677 ± 0.087 | 20.80 ± 0.05 |
+| apache2 | E2 1x2 | 4 | 33.708 ± 2.098 | 11.22 ± 3.12 |
+| apache2 | E2s 1x2 | 4 | 24.586 ± 0.148 | 12.13 ± 0.24 |
+| apache2 | P3 1x3 | 3 | 11.802 ± 0.210 | 25.20 ± 0.43 |
+| apache2 | E3 1x3 | 4 | 29.593 ± 1.446 | 11.48 ± 2.02 |
+| apache2 | E3s 1x3 | 3 | 23.008 ± 0.033 | 12.32 ± 0.04 |
+| apache2 | P4 1x4 | 3 | 9.952 ± 0.234 | 30.03 ± 0.51 |
+| apache2 | E4 1x4 | 3 | 30.944 ± 0.049 | 10.62 ± 0.11 |
+| apache2 | E4s 1x4 | 4 | 19.179 ± 0.278 | 13.47 ± 2.30 |
+| cant | P1 1x1 | 4 | 24.061 ± 0.327 | 15.19 ± 0.69 |
+| cant | E1 1x1 | 3 | 50.791 ± 0.129 | 8.79 ± 0.08 |
+| cant | P2 1x2 | 4 | 12.696 ± 0.211 | 22.23 ± 0.19 |
+| cant | E2 1x2 | 3 | 28.745 ± 0.039 | 11.17 ± 0.04 |
+| cant | E2s 1x2 | 3 | 26.445 ± 0.032 | 11.63 ± 0.10 |
+| cant | P3 1x3 | 3 | 10.469 ± 0.207 | 25.65 ± 0.23 |
+| cant | E3 1x3 | 3 | 24.943 ± 0.140 | 11.29 ± 0.09 |
+| cant | E3s 1x3 | 4 | 19.688 ± 0.223 | 14.41 ± 1.63 |
+| cant | P4 1x4 | 3 | 9.019 ± 0.246 | 30.17 ± 0.55 |
+| cant | E4 1x4 | 4 | 23.130 ± 2.664 | 13.64 ± 4.61 |
+| cant | E4s 1x4 | 3 | 16.048 ± 0.023 | 14.89 ± 0.03 |
+| ecology2 | P1 1x1 | 4 | 36.660 ± 0.403 | 15.40 ± 0.02 |
+| ecology2 | E1 1x1 | 3 | 69.768 ± 0.182 | 9.20 ± 0.02 |
+| ecology2 | P2 1x2 | 3 | 23.508 ± 0.132 | 18.91 ± 0.06 |
+| ecology2 | E2 1x2 | 4 | 52.042 ± 2.819 | 11.21 ± 3.20 |
+| ecology2 | E2s 1x2 | 3 | 37.436 ± 0.082 | 11.96 ± 0.05 |
+| ecology2 | P3 1x3 | 3 | 19.263 ± 0.107 | 22.66 ± 0.10 |
+| ecology2 | E3 1x3 | 4 | 48.436 ± 0.253 | 10.29 ± 0.17 |
+| ecology2 | E3s 1x3 | 3 | 35.322 ± 0.076 | 12.17 ± 0.07 |
+| ecology2 | P4 1x4 | 3 | 16.581 ± 0.085 | 26.73 ± 0.06 |
+| ecology2 | E4 1x4 | 3 | 47.610 ± 1.039 | 10.95 ± 0.72 |
+| ecology2 | E4s 1x4 | 4 | 30.538 ± 0.105 | 10.81 ± 0.09 |
+| thermal2 | P1 1x1 | 3 | 53.269 ± 0.175 | 14.90 ± 0.04 |
+| thermal2 | E1 1x1 | 3 | 94.165 ± 0.518 | 9.16 ± 0.06 |
+| thermal2 | P2 1x2 | 3 | 30.224 ± 0.249 | 18.93 ± 0.07 |
+| thermal2 | E2 1x2 | 3 | 54.146 ± 0.060 | 11.47 ± 0.13 |
+| thermal2 | E2s 1x2 | 4 | 49.950 ± 0.694 | 12.24 ± 0.68 |
+| thermal2 | P3 1x3 | 3 | 22.363 ± 0.019 | 24.54 ± 0.03 |
+| thermal2 | E3 1x3 | 4 | 43.833 ± 0.017 | 12.57 ± 0.07 |
+| thermal2 | E3s 1x3 | 3 | 38.576 ± 0.158 | 12.51 ± 0.15 |
+| thermal2 | P4 1x4 | 3 | 19.272 ± 0.080 | 28.86 ± 0.07 |
+| thermal2 | E4 1x4 | 3 | 40.089 ± 0.036 | 13.07 ± 0.03 |
+| thermal2 | E4s 1x4 | 3 | 31.223 ± 0.043 | 13.66 ± 0.10 |
 
 ### 6.3.3 Experiment B: mixed and full-chip configurations (separate experiment)
 
@@ -935,13 +1053,71 @@ Table 6.5 gives their time- and energy-to-solution.
 
 Table 6.5: Mixed and full-chip configurations: time (s) / energy (J) to τ = 10⁻⁸.
 
-[[FILL-TABLE-6.5]]
+| Matrix | Configuration | n | Time (s), mean ± SD | Package energy (J), mean ± SD |
+|---|---|---|---|---|
+| G3_circuit | P4 1x4 | 3 | 30.925 ± 0.067 | 819.32 ± 2.95 |
+| G3_circuit | P8ht 1x8 | 3 | 32.839 ± 0.019 | 726.77 ± 1.43 |
+| G3_circuit | E8 1x8 | 3 | 44.628 ± 0.028 | 578.60 ± 2.06 |
+| G3_circuit | M8 1x8 | 3 | 40.848 ± 0.060 | 802.13 ± 2.63 |
+| G3_circuit | M8 8x1 | 3 | 40.139 ± 0.012 | 1365.82 ± 6.38 |
+| G3_circuit | A12 1x12 | 3 | 33.430 ± 0.073 | 770.38 ± 2.95 |
+| G3_circuit | A12 12x1 | 3 | 33.772 ± 0.024 | 1302.76 ± 3.19 |
+| G3_circuit | A16 1x16 | 3 | 30.605 ± 0.056 | 720.29 ± 1.74 |
+| G3_circuit | U4 1x4 | 3 | 31.092 ± 0.155 | 819.78 ± 1.21 |
+| G3_circuit | U8 1x8 | 3 | 34.211 ± 0.056 | 771.71 ± 1.90 |
+| G3_circuit | U16 1x16 | 3 | 31.291 ± 0.759 | 729.30 ± 9.31 |
+| apache2 | P4 1x4 | 3 | 9.851 ± 0.043 | 296.46 ± 1.61 |
+| apache2 | P8ht 1x8 | 3 | 10.048 ± 0.034 | 276.94 ± 3.19 |
+| apache2 | E8 1x8 | 3 | 16.577 ± 0.031 | 215.68 ± 1.38 |
+| apache2 | M8 1x8 | 3 | 14.236 ± 0.006 | 312.51 ± 0.51 |
+| apache2 | M8 8x1 | 3 | 14.078 ± 0.030 | 544.65 ± 0.98 |
+| apache2 | A12 1x12 | 3 | 11.458 ± 0.024 | 303.80 ± 0.96 |
+| apache2 | A12 12x1 | 3 | 11.385 ± 0.023 | 493.70 ± 0.51 |
+| apache2 | A16 1x16 | 3 | 9.990 ± 0.043 | 273.08 ± 0.84 |
+| apache2 | U4 1x4 | 3 | 9.971 ± 0.080 | 298.77 ± 1.97 |
+| apache2 | U8 1x8 | 3 | 11.759 ± 0.020 | 303.03 ± 0.06 |
+| apache2 | U16 1x16 | 3 | 10.417 ± 0.748 | 279.61 ± 10.40 |
+| cant | P4 1x4 | 3 | 8.861 ± 0.084 | 270.64 ± 0.69 |
+| cant | P8ht 1x8 | 3 | 8.131 ± 0.010 | 262.76 ± 0.48 |
+| cant | E8 1x8 | 3 | 13.801 ± 0.013 | 194.63 ± 3.11 |
+| cant | M8 1x8 | 3 | 11.227 ± 0.037 | 294.47 ± 0.49 |
+| cant | M8 8x1 | 3 | 11.266 ± 0.014 | 442.70 ± 0.91 |
+| cant | A12 1x12 | 3 | 9.064 ± 0.011 | 277.03 ± 1.39 |
+| cant | A12 12x1 | 3 | 9.239 ± 0.057 | 415.71 ± 2.51 |
+| cant | A16 1x16 | 3 | 7.126 ± 0.015 | 267.40 ± 0.14 |
+| cant | U4 1x4 | 3 | 9.052 ± 0.035 | 271.71 ± 0.76 |
+| cant | U8 1x8 | 3 | 9.548 ± 0.016 | 287.76 ± 0.11 |
+| cant | U16 1x16 | 3 | 7.086 ± 0.019 | 266.79 ± 0.55 |
+| ecology2 | P4 1x4 | 3 | 16.493 ± 0.130 | 441.81 ± 2.60 |
+| ecology2 | P8ht 1x8 | 3 | 17.010 ± 0.029 | 400.26 ± 1.76 |
+| ecology2 | E8 1x8 | 3 | 26.074 ± 0.073 | 333.47 ± 2.56 |
+| ecology2 | M8 1x8 | 3 | 23.378 ± 0.084 | 460.30 ± 1.23 |
+| ecology2 | M8 8x1 | 3 | 22.888 ± 0.016 | 806.67 ± 1.64 |
+| ecology2 | A12 1x12 | 3 | 18.392 ± 0.010 | 446.59 ± 0.48 |
+| ecology2 | A12 12x1 | 3 | 18.035 ± 0.028 | 713.37 ± 0.63 |
+| ecology2 | A16 1x16 | 3 | 16.646 ± 0.018 | 395.82 ± 0.96 |
+| ecology2 | U4 1x4 | 3 | 16.545 ± 0.056 | 445.09 ± 0.34 |
+| ecology2 | U8 1x8 | 3 | 18.858 ± 0.062 | 440.12 ± 0.43 |
+| ecology2 | U16 1x16 | 3 | 17.936 ± 1.215 | 414.10 ± 17.74 |
+| thermal2 | P4 1x4 | 3 | 19.187 ± 0.025 | 555.70 ± 0.88 |
+| thermal2 | P8ht 1x8 | 3 | 18.615 ± 0.012 | 496.27 ± 2.49 |
+| thermal2 | E8 1x8 | 3 | 24.903 ± 0.029 | 408.15 ± 2.09 |
+| thermal2 | M8 1x8 | 3 | 23.337 ± 0.010 | 527.21 ± 1.15 |
+| thermal2 | M8 8x1 | 3 | 22.859 ± 0.024 | 850.22 ± 0.68 |
+| thermal2 | A12 1x12 | 3 | 19.179 ± 0.005 | 531.04 ± 0.84 |
+| thermal2 | A12 12x1 | 3 | 19.155 ± 0.014 | 819.96 ± 0.83 |
+| thermal2 | A16 1x16 | 3 | 17.608 ± 0.068 | 513.95 ± 0.73 |
+| thermal2 | U4 1x4 | 3 | 19.302 ± 0.096 | 556.05 ± 0.77 |
+| thermal2 | U8 1x8 | 3 | 20.516 ± 0.051 | 517.12 ± 0.54 |
+| thermal2 | U16 1x16 | 3 | 17.548 ± 0.034 | 512.99 ± 0.91 |
+
+Configuration notation is label ranks×threads. P8ht uses four physical P-cores with eight hardware threads; E8 uses eight physical E-cores, so this pair is not an equal-physical-core comparison. P4 is the common reference; Experiment B contains no P1 baseline. Average power in Table 6.4 is the mean of each run’s energy/time, not a ratio of separately averaged values.
 
 ### 6.3.4 Experiment C: configuration survey (1000 iterations per run)
 
 This supplementary survey covers 51 configurations at a fixed 1000 iterations, so every configuration does identical work. It is used for the process×thread split, the OpenMP schedule and unpinned multi-rank runs, which Experiments A and B do not cover. Its results are work-normalised, not energy-to-solution. All 765 runs were kept: none was throttled and all were on AC power. The median CV was 0.3% for time and 0.7% for energy.
 
-Table 6.6 compares MPI-only and OpenMP-only versions on the same CPUs. Table 6.7 compares the dynamic and static schedules. Both are ratios of means; the coefficient of variation of every underlying mean is at most 2.6% unless noted.
+Table 6.6 compares MPI-only and OpenMP-only versions on the same CPUs. Table 6.7 compares the dynamic and static schedules. Both are ratios of means. Among their underlying groups, the maximum time CV is 8.00% (cant, P4 1×4) and the maximum energy CV is 3.54% (cant, A16 16×1); small differences should therefore be interpreted cautiously.
 
 Table 6.6: MPI-only (R×1) relative to OpenMP-only (1×R) on the same CPUs: time ratio / energy ratio (means).
 
@@ -954,7 +1130,7 @@ Table 6.6: MPI-only (R×1) relative to OpenMP-only (1×R) on the same CPUs: time
 | A12 (4 P + 8 E) | 1.00 / **1.53** | 1.02 / **1.68** | 0.98 / **1.58** | 0.99 / **1.64** | 1.01 / **1.51** |
 | A16 (all 16 threads) | 1.02 / 1.03 | 1.04 / 1.08 | 1.03 / 1.04 | 1.06 / 1.05 | 1.06 / 1.01 |
 
-With MPI-only on the mixed P+E sets (M8 8×1, A12 12×1), 40–50% of the solve time was spent inside `MPI_Allreduce`. For A16 16×1, where two ranks share each P-core through Hyper-Threading, the figure was 5–6%. Halo exchange took at most 7.1% of the time in any configuration.
+With MPI-only on the mixed P+E sets (M8 8×1, A12 12×1), 40–50% of the solve time was spent inside `MPI_Allreduce`. For A16 16×1, where two ranks share each P-core through Hyper-Threading, the figure was 5–6%. The maximum group-median halo fraction was 7.14% among pinned configurations, but 25.12% across all configurations (apache2, unpinned U16 4×4). These fractions measure halo exchange separately from collective reductions.
 
 Table 6.7: Dynamic (`dynamic,64`) relative to static SpMV schedule: time ratio / energy ratio.
 
@@ -989,9 +1165,9 @@ Table 6.8: Package energy (J, mean ± SD) under different waiting policies, 1000
 | M8 1×8, `OMP_WAIT_POLICY=active` | 120.9 ± 0.2 | 120.8 ± 1.8 | 72.4 ± 0.7 |
 | P4 4×1 / P4 1×4 (control, P-cores only) | 127.5 ± 0.2 / 126.1 ± 1.2 | 121.2 ± 0.9 / 122.0 ± 0.9 | 71.0 ± 0.3 / 72.2 ± 3.4 |
 
-Except for the passive variants, all variants of the same CPU set solved within 3% of each other's time. The passive A12 variants (times in brackets) were 3.0–3.2× slower than default waiting.
+Except for the passive variants, all variants of the same CPU set solved within 3% of each other's time. The passive A12 variants (times in brackets) took 3.01–3.49× as long as default waiting.
 
-Table 6.9: Hardware counters, thermal2, 2000 iterations, whole run (mean of 2 runs; the two runs' package energies differed by at most 0.8%).
+Table 6.9: Hardware counters, thermal2, 2000 iterations (mean of 2 runs). Counters cover the whole mpirun; package energy covers the solver’s measured interval. The two package-energy observations differed by at most 0.81% of their pair mean.
 
 | Configuration | Package energy (J) | P-core instructions (×10⁹) | P-core IPC | P-core cycles in PAUSE | E-core instructions (×10⁹) |
 |---|---|---|---|---|---|
@@ -1021,22 +1197,54 @@ Figure 6.2 shows energy and time against core count for the three core families,
 
 ### RQ2: core type at equal core counts
 
-[[FILL-7.1-RQ2]]
+At every matched physical core count (1–4), P-cores have lower mean runtime. At one core, E1/P1 is 1.77–2.11 for time and 1.09–1.22 for energy: lower E-core power does not compensate for the longer solve. At four cores, spread E4s/P4 is 1.62–1.93 for time and 0.72–0.88 for energy, a 12.2–27.9% energy saving. E4s has the lowest mean package energy on every matrix in Experiment A.
+
+Packed and spread E-core placements must be distinguished. E4 uses CPUs 8–11 in one shared-L2 module; E4s uses CPUs 8, 9, 12, 13 across two modules. Spreading lowers both mean time and mean energy on all five matrices. This is consistent with reduced contention and more aggregate L2 capacity, but the placement experiment alone does not isolate the cache mechanism. At two and three cores the energy advantage depends on matrix and placement; E-cores are not uniformly more energy-efficient. Large SDs in some groups, including ecology2 E2 (energy CV 21.84%) and cant E4 (time CV 11.52%), require caution with small differences.
 
 ### RQ1: fastest versus lowest-energy configuration
 
-[[FILL-7.1-RQ1]]
+Across the observed means in A and B, the fastest and minimum-energy configurations differ for every matrix. The following table keeps the two P4 measurements as separate experiment groups, without pooling sessions.
+
+| Matrix | Fastest mean configuration | Time (s), mean ± SD | Minimum-energy configuration | Energy (J), mean ± SD | Fast / minimum energy | Low-energy / fast time |
+|---|---|---|---|---|---|---|
+| G3_circuit | A16 1x16 (B) | 30.605 ± 0.056 | E8 1x8 (B) | 578.60 ± 2.06 | 1.24 | 1.46 |
+| apache2 | P4 1x4 (B) | 9.851 ± 0.043 | E8 1x8 (B) | 215.68 ± 1.38 | 1.37 | 1.68 |
+| cant | U16 1x16 (B) | 7.086 ± 0.019 | E8 1x8 (B) | 194.63 ± 3.11 | 1.37 | 1.95 |
+| ecology2 | P4 1x4 (B) | 16.493 ± 0.130 | E4s 1x4 (A) | 330.10 ± 1.89 | 1.34 | 1.85 |
+| thermal2 | U16 1x16 (B) | 17.548 ± 0.034 | E8 1x8 (B) | 408.15 ± 2.09 | 1.26 | 1.42 |
+
+A16 has the lowest mean time on G3_circuit; P4 wins apache2 and ecology2; U16 has the lowest mean on cant and thermal2. E8 has the lowest mean energy in Experiment B for every matrix. Across both experiments, E4s in A has slightly lower mean energy than E8 in B on ecology2. Small cross-session differences (including G3_circuit E4s versus E8) should not be treated as established superiority. The close U16/A16 runtime differences likewise do not establish a general advantage for unpinned execution. These are descriptive rankings of small samples, not significance-tested claims.
 
 ### RQ3: default scheduler
 
-[[FILL-7.1-RQ3]]
+For Experiment B, the table compares each unpinned OpenMP configuration with pinned OpenMP configurations at the same thread count. Runtime and energy optima are selected separately and named explicitly. A ratio above one means the unpinned configuration is worse for that metric. Equal thread counts here do not imply equal physical core counts or identical CPU placement.
+
+| Matrix | Threads | Fastest pinned | Unpinned / pinned time | Lowest-energy pinned | Unpinned / pinned energy |
+|---|---|---|---|---|---|
+| G3_circuit | 4 | P4 1x4 | 1.005 | P4 1x4 | 1.001 |
+| G3_circuit | 8 | P8ht 1x8 | 1.042 | E8 1x8 | 1.334 |
+| G3_circuit | 16 | A16 1x16 | 1.022 | A16 1x16 | 1.013 |
+| apache2 | 4 | P4 1x4 | 1.012 | P4 1x4 | 1.008 |
+| apache2 | 8 | P8ht 1x8 | 1.170 | E8 1x8 | 1.405 |
+| apache2 | 16 | A16 1x16 | 1.043 | A16 1x16 | 1.024 |
+| cant | 4 | P4 1x4 | 1.022 | P4 1x4 | 1.004 |
+| cant | 8 | P8ht 1x8 | 1.174 | E8 1x8 | 1.478 |
+| cant | 16 | A16 1x16 | 0.994 | A16 1x16 | 0.998 |
+| ecology2 | 4 | P4 1x4 | 1.003 | P4 1x4 | 1.007 |
+| ecology2 | 8 | P8ht 1x8 | 1.109 | E8 1x8 | 1.320 |
+| ecology2 | 16 | A16 1x16 | 1.077 | A16 1x16 | 1.046 |
+| thermal2 | 4 | P4 1x4 | 1.006 | P4 1x4 | 1.001 |
+| thermal2 | 8 | P8ht 1x8 | 1.102 | E8 1x8 | 1.267 |
+| thermal2 | 16 | A16 1x16 | 0.997 | A16 1x16 | 0.998 |
+
+U4 is close to P4. U8 is slower than P8ht and consumes more energy than E8 on every matrix, although these are two different pinned references. U16 is close to A16 on cant and thermal2, but is more variable on apache2 and ecology2 (time CV 7.18% and 6.77%). Thus the default scheduler does not consistently match both pinned optima. This comparison measures outcomes, not scheduler migration or placement decisions, which were not traced.
 
 ### Process×thread split and waiting
 
 This finding follows from two design choices in Chapter 3: the equal-nonzero partition (Algorithm 2, Section 3.5) and the two global reductions per iteration (Section 3.4.2), each of which makes every rank wait for the slowest. On a single core type, the split between MPI ranks and OpenMP threads hardly matters: MPI-only and OpenMP-only differ by at most 7% in time and mostly by under 4% in energy (Table 6.6). When P- and E-cores are mixed, MPI-only uses 1.51–1.76× the energy of OpenMP-only at the same runtime. The cause is load imbalance combined with *how* the fast cores wait:
 - **Imbalance:** equal-nonzero row blocks are equal work, but an E-core rank needs about twice as long. P-core ranks therefore spend 40–50% of the solve waiting in `MPI_Allreduce`.
-- **Forced spinning is not the cause.** Forcing OpenMP threads to spin raised their energy by at most 4%, still far below the MPI level. MPI's yield option saved only 3–5% (Table 6.8).
-- **The counters show the difference (Table 6.9).** Waiting OpenMP threads spend 38% of their cycles in the x86 PAUSE instruction, which lowers core power. Waiting MPI ranks never execute PAUSE. Instead they execute 168–211 billion extra instructions at an IPC of 1.7–1.9: Open MPI's shared-memory progress loop polling its queues.
+- **Forced spinning is not the cause.** Forcing active OpenMP waiting raised mean energy by at most 4.3%, still far below the mixed-core MPI level. MPI's yield option saved 2.8–5.3% (Table 6.8).
+- **The counters show the difference (Table 6.9).** Across the measured P-cores, OpenMP runs spend about 38% of counted cycles in PAUSE, whereas the corresponding mixed-core MPI runs spend only 0.1–0.2%. The aggregate counters include computation and setup, so these are not percentages measured exclusively during waiting. The mixed-core MPI runs execute 168–211 billion more P-core instructions at an IPC of 1.7–1.9, consistent with busy-polling in Open MPI’s shared-memory progress loop.
 - **The useful work is the same.** E-cores execute the same number of instructions under both models.
 - **Without imbalance, the penalty disappears.** With 16 ranks on 16 hardware threads (A16 16×1), each Hyper-Threaded P-core rank runs at roughly E-core speed. Waiting falls to 5–6% and the energy gap to at most 8%.
 
@@ -1053,30 +1261,30 @@ Table 7.1: Comparison with existing approaches (conditions differ as noted in Re
 | Oliker et al. [7] | CG/PCG; distributed and DSM systems | Hybrid vs MPI runtime: little performance gain | — | Our single-processor runtimes agree (MPI vs OpenMP within 7%), but on mixed P+E cores MPI costs 1.5–1.8× more energy |
 | Lively et al. [4] | NAS BT, LBM, GTC; 32 homogeneous cores | Hybrid lower time and energy at 32 cores | Best frequency for energy ≠ best for time | Homogeneous cluster; we find the fastest and lowest-energy configurations differ by core choice, at a fixed frequency policy |
 | Wlotzka & Heuveline [5] | Multigrid; large homogeneous host systems | Hybrid MPI+OpenMP most energy-efficient | Not the fastest | Same qualitative result on one hybrid processor, with a measured mechanism (busy-polling) |
-| Żytko & Badurowicz [6] | Microbenchmarks, Intel 12th/13th gen | E-cores up to 17% more efficient (memory-intensive) | P-cores 1.3–3.2× faster | [[FILL-7.2-A]] |
-| Velugoti et al. [11] | OpenMP applications, Alder Lake | Imbalanced apps scale better without affinity (runtime) | — | [[FILL-7.2-B]] |
-| E-Mapper [12] / HARP [13] | OpenMP/TBB/TensorFlow; OS-level manager | −20% / −12% time | −34% / −28% energy | Different workloads and baseline; [[FILL-7.2-C]] |
-| **Proposed system (this work)** | Sparse CG, 5 SuiteSparse matrices, Intel Core i5-13500H | [[FILL-7.2-D]] | MPI-only penalty on mixed cores: 1.5–1.8× energy | Same instrument for all configurations; τ = 10⁻⁸ |
+| Żytko & Badurowicz [6] | Microbenchmarks, Intel 12th/13th gen | E-cores up to 17% more efficient (memory-intensive) | P-cores 1.3–3.2× faster | Our equal-count results also depend on placement: spread E4s saves energy but remains slower than P4 |
+| Velugoti et al. [11] | OpenMP applications, Alder Lake | Imbalanced apps scale better without affinity (runtime) | — | Our U16/A16 results are matrix-dependent; unpinned placement does not consistently minimise both metrics |
+| E-Mapper [12] / HARP [13] | OpenMP/TBB/TensorFlow; OS-level manager | −20% / −12% time | −34% / −28% energy | Different workloads and baseline; our measurements compare fixed placements, not adaptive resource managers |
+| **Proposed system (this work)** | Sparse CG, 5 SuiteSparse matrices, Intel Core i5-13500H | Four spread E-cores: 12.2–27.9% less energy, 1.62–1.93× runtime versus four P-cores | MPI-only penalty on mixed cores: 1.5–1.8× energy | Same instrument for all configurations; τ = 10⁻⁸ |
 
 Where conditions differ (other processors, applications and baselines), the comparison is qualitative.
 
 ## 7.3 Achievement of Objectives
 
-- **O1:** [[FILL-7.3-O1]]
-- **O2:** Achieved.
+- **O1:** Achieved for the recorded tolerance-mode experiments: all 348 A/B runs converged and met the strict true relative residual bound of 10⁻⁸; solution errors and iteration ranges are reported in Table 6.2.
+- **O2:** Partly achieved: the harness is complete, but the below-2% CV target is not met by every pinned group.
   - Energy was read once per run by one process between barriers, with rollover correction and a whole-run cross-check.
   - Exclusion rules were fixed in advance. No run had to be excluded in Experiments C and D.
-  - Pinned configurations had a median CV of 0.7% [[FILL-7.3-O2: confirm for A, B]].
-- **O3:** [[FILL-7.3-O3]]
+  - Median pinned-group CVs were 0.52% (time) and 0.66% (energy) in A, and 0.15% (time) and 0.25% (energy) in B. These medians do not imply that every group met the target; the largest A energy CV was 21.84%.
+- **O3:** Achieved with the actual sample counts disclosed: 55 matrix/configuration groups in A and 55 in B, all five matrices, equal physical core counts separated from mixed/full-chip execution, and mean ± sample SD reported. A has three or four runs per group; B has three.
 - **O4:** Achieved for RQ1–RQ3 (Section 7.1). The unexpected MPI energy penalty was explained with hardware counters.
 
 ## 7.4 Error and Failure Analysis
 
 - **Pure MPI on mixed cores** is the configuration that fails on energy. It uses 1.5–1.8× more energy for no speed gain, because P-core ranks busy-poll while waiting for E-core ranks (Section 7.1).
-- **Single E-core runs** are the worst on both time and energy: the package's fixed power is paid for about twice as long.
+- **Single E-core runs** are slower and consume more package energy than single P-core runs in Experiment A; lower power does not offset the longer solve time.
 - **Dynamic scheduling** adds overhead without fixing the real imbalance, which is between core types, not between rows.
 - **Unpinned multi-rank runs** at 16 threads were erratic, with CV up to 56%. A likely cause is that the scheduler sometimes places two busy ranks on one core.
-- **G3_circuit accuracy:** its error against the exact solution (≈1.5×10⁻³) is far larger than its residual (10⁻⁸). This reflects the matrix's ill-conditioning, is the same in every configuration, and does not affect the comparisons.
+- **G3_circuit accuracy:** its error against the exact solution (≈1.5×10⁻³) is far larger than its residual (10⁻⁸). This is consistent with ill-conditioning, and the error is of similar order across configurations. The comparisons use a common residual tolerance; forward errors are reported separately.
 - **Background activity:** one earlier sweep started at 13 W idle power. The analysis does not depend on that idle value, and the sweep driver now aborts in this situation.
 
 ## 7.5 Limitations
@@ -1084,11 +1292,12 @@ Where conditions differ (other processors, applications and baselines), the comp
 - **Energy scope:** RAPL gives processor-package energy only. There is no DRAM domain and no separate P-core or E-core reading, and on-chip readings can differ from external meters [17], [14]. Results are therefore relative comparisons.
 - **One platform:** one processor model, one power policy and one MPI library (Open MPI 4.1.2). Other MPI libraries may wait differently.
 - **No preconditioner:** preconditioners change the balance between memory traffic and synchronisation.
-- **Small samples:** three repetitions per configuration, and two for the hardware-counter runs, whose counts include start-up (under 10% of the run).
+- **Small samples:** three or four observations per configuration in A, three in B–D, and two for the hardware-counter runs, whose counters include setup and startup as well as the solve.
+- **Temperature control:** cooldown is checked before launching mpirun and stops after at most 120 s. The solver records temperature after matrix loading and setup. Recorded solve-start temperature exceeded 55 °C in 180/183 A runs and 165/165 B runs, with maxima of 74 °C and 67 °C respectively. Thus a uniform ≤ 55 °C solve-start condition was not achieved, although no A/B run recorded a throttle event; temperature-dependent frequency effects remain a possible confounder.
 - **Partitioning:** the equal-nonzero partition ignores core speed, so on mixed P+E sets fast cores wait for slow ones.
 - **Single node:** no inter-node communication.
 - **Threats to validity:**
-  - Small sample: 3 runs per configuration.
+  - Small sample: 3–4 observations per group in A, 3 in B–D, and 2 for hardware counters.
   - A single test environment: one laptop, one operating-system image, one room temperature.
   - Selection of five matrices, which may not represent every sparsity pattern.
   - On-chip energy estimation, which may contain a bias common to all configurations.
@@ -1099,9 +1308,9 @@ Where conditions differ (other processors, applications and baselines), the comp
 
 Mainstream processors now mix fast P-cores and efficient E-cores, yet parallel sparse solvers are configured as if all cores were equal. We built a hybrid MPI+OpenMP Conjugate Gradient solver with nonzero-balanced decomposition, RCM reordering, explicit core pinning and once-per-run RAPL energy measurement. We measured its time- and energy-to-solution on an Intel Core i5-13500H for five SuiteSparse matrices, with every run converged to the same tolerance and verified.
 
-[[FILL-8-P2: key results with numbers]] On mixed P+E core sets, pure MPI used 1.5–1.8× more energy than OpenMP at the same runtime. Hardware counters traced this to P-core ranks busy-polling for messages while E-core ranks finished, whereas waiting OpenMP threads spent 38% of their cycles in the low-power PAUSE instruction.
+At equal physical core counts, P-cores were faster in every comparison. Four E-cores spread across both E-modules saved 12.2–27.9% package energy relative to four P-cores, at 1.62–1.93× the runtime. Across A and B, the fastest observed mean and lowest-energy mean belonged to different configurations on every matrix; the faster choice used 1.24–1.37× as much energy. The default scheduler did not consistently attain both pinned optima. On mixed P+E core sets, pure MPI used 1.5–1.8× more energy than OpenMP at the same runtime. Hardware counters traced this to P-core ranks busy-polling for messages while E-core ranks finished, whereas the corresponding OpenMP runs spent about 38% of measured P-core cycles in PAUSE.
 
-[[FILL-8-P3: objectives met]] The main lesson is that on heterogeneous processors the core type, the spread of cores across E-modules, and the choice between MPI ranks and OpenMP threads are energy decisions in their own right. The right choices differ from those made for homogeneous hardware.
+The implementation, correctness and comparative-analysis objectives were achieved for the recorded workloads. The measurement harness was completed, but its below-2% CV target was not met for every pinned group; O2 is therefore only partly achieved. All 348 A/B runs were retained, and the additional 18 A observations and small sample sizes are disclosed. The main lesson is that on heterogeneous processors the core type, the spread of cores across E-modules, and the choice between MPI ranks and OpenMP threads are energy decisions in their own right. The right choices differ from those made for homogeneous hardware.
 
 ---
 

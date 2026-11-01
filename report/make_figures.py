@@ -123,8 +123,11 @@ def fig_energy_vs_time(full):
     tol_mode = os.path.exists(a) and os.path.exists(b)
     if tol_mode:
         ea, eb = load_summary("equalcount"), load_summary("mixed")
-        full = {m: {**ea.get(m, {}), **eb.get(m, {})} for m in MATRICES}
-        title = "Energy-to-solution vs. time-to-solution, Experiments A and B (tolerance 1e-8, mean of 3)"
+        # Keep the repeated P4 reference as separate experiment groups.
+        full = {m: {f"{exp}:{cfg}": {**r, "cfg": f"{cfg} ({exp})"}
+                    for exp, source in (("A", ea), ("B", eb))
+                    for cfg, r in source.get(m, {}).items()} for m in MATRICES}
+        title = "Energy-to-solution vs. time-to-solution (tolerance 1e-8; A: n=3–4, B: n=3; means)"
         tk, ek = "time_mean", "e_mean"
     else:
         title = "Energy vs. time for all 51 configurations (1000 CG iterations, median of 3)"
@@ -190,10 +193,10 @@ def fig_mpi_vs_omp(spin):
         xs, ys = [], []
         for i, (_, g) in enumerate(groups):
             if s in g:
-                xs.append(i + (k - 1.5) * w); ys.append(float(spin[m][g[s]]["e_pkg_med"]))
+                xs.append(i + (k - 1.5) * w); ys.append(float(spin[m][g[s]]["e_mean"]))
         ax.bar(xs, ys, width=w - 0.02, color=SER[k], label=s, zorder=3)
     ax.set_xticks(range(len(groups)), [g for g, _ in groups])
-    ax.set_ylabel("package energy (J), thermal2")
+    ax.set_ylabel("mean package energy (J), thermal2")
     ax.legend(frameon=False, fontsize=7.5, ncol=2, loc="upper left", bbox_to_anchor=(0, -0.1))
     style(ax)
     save(fig, "fig5_mpi_vs_openmp_energy.png")
@@ -316,7 +319,7 @@ def fig_equalcount():
     fam = [("P-cores", ["P1", "P2", "P3", "P4"], SER[0], "o"),
            ("E-cores, packed in one module", ["E1", "E2", "E3", "E4"], SER[1], "s"),
            ("E-cores, spread over two modules", ["E1", "E2s", "E3s", "E4s"], SER[2], "^")]
-    fig, axes = plt.subplots(2, 5, figsize=(7.4, 3.9), sharex=True)
+    fig, axes = plt.subplots(2, 5, figsize=(10.5, 5.2), sharex=True)
     for j, m in enumerate(MATRICES):
         for row, (key, sd, lab) in enumerate([("e_mean", "e_sd", "energy-to-solution (J)"), ("time_mean", "time_sd", "time-to-solution (s)")]):
             ax = axes[row, j]
@@ -330,8 +333,9 @@ def fig_equalcount():
             if row == 0: ax.set_title(m, fontsize=8, loc="left")
             if row == 1: ax.set_xlabel("physical cores", fontsize=7)
             style(ax, "both")
-    axes[0, 0].legend(frameon=False, fontsize=6.5, loc="upper left", bbox_to_anchor=(0, -1.55), ncol=3)
-    fig.tight_layout()
+    handles, labels = axes[0, 0].get_legend_handles_labels()
+    fig.legend(handles, labels, frameon=False, fontsize=8, loc="lower center", ncol=3)
+    fig.tight_layout(rect=(0, 0.07, 1, 1), w_pad=1.8)
     save(fig, "fig_equalcount.png")
 
 
