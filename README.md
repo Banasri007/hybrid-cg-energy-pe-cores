@@ -145,6 +145,6 @@ python3 report/build_report.py
 
 The figure script reads existing summaries. The report builder renumbers citations and creates `PCAP_Final_Report.md` from `report_src.md`; **it does not recalculate the report's numerical tables or prose**. If raw data change, regenerate the relevant summaries and reconcile the report source before rebuilding.
 
-The current analyzer checks convergence diagnostics against `1.05 * tol`, although generated text says `<= tol`. A/B were separately checked against the stricter recorded bound. Automatic RQ3 lines may name the runtime-optimal configuration while quoting energy from a different configuration; the final report names the references separately. The automatic “tie within 3%” label is a heuristic, not a significance test.
+Automatic RQ3 lines may name the runtime-optimal configuration while quoting energy from a different configuration; the final report names the references separately. The automatic “tie within 3%” label is a heuristic, not a significance test.
 
 The study uses one platform and small samples; some groups exceed the 2% CV target. Cache and waiting mechanisms are supported interpretations rather than fully isolated causal measurements. See [PROJECT_STATUS.md](PROJECT_STATUS.md) and the [final report](report/PCAP_Final_Report.md) for the remaining validation and reproducibility work.
